@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import axios from "axios"
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import { User, Store, Building, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import axios from 'axios';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { User, Store, Building, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -12,118 +12,136 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { toast } from "sonner"
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   // login states
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [userType, setUserType] = useState("customer")
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState('customer');
 
   // signup states
-  const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
-  const [showSignupModal, setShowSignupModal] = useState(false)
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [showSignupModal, setShowSignupModal] = useState(false);
 
-
-  const [error, setError] = useState("")
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-    console.log("login clicked");
+    console.log('login clicked');
     e.preventDefault();
-  
-    if (userType === "admin" && email.includes("admin")) {
-      localStorage.setItem("role", JSON.stringify("admin"));
-      toast.success("Admin login successful!");
-      router.push("/admin");
+
+    if (userType === 'admin' && email.includes('admin')) {
+      localStorage.setItem('role', JSON.stringify('admin'));
+      toast.success('Admin login successful!');
+      router.push('/admin');
       return; // skip the rest
     }
-  
-    let loginUrl = "";
-  
-    if (userType === "customer") {
-      loginUrl = "http://localhost:8800/api/user/login";
-    } else if (userType === "store-owner") {
-      loginUrl = "http://localhost:8800/api/store-owner/login";
+
+    let loginUrl = '';
+
+    if (userType === 'customer') {
+      loginUrl = 'http://localhost:8800/api/user/login';
+    } else if (userType === 'store-owner') {
+      loginUrl = 'http://localhost:8800/api/store-owner/login';
     }
-  
+
     try {
       const res = await axios.post(loginUrl, {
         email,
         password,
       });
-  
-      console.log("res:", res.data);
-      if (res.data.status === "success") {
-        const user = res.data.data;
-  
-        localStorage.setItem("user_id", JSON.stringify(user.user_id));
-        localStorage.setItem("role", JSON.stringify(user.role));
-  
-        toast.success("Login successful!");
-  
-        if (userType === "customer") {
-          router.push("/customer");
-        } else if (userType === "store-owner") {
-          localStorage.setItem("store_owner_details", JSON.stringify(user));
-          localStorage.setItem("store_owner_id", JSON.stringify(user.storeOwner_id));
 
-          router.push("/store-owner");
+      console.log('res:', res.data);
+      if (res.data.status === 'success') {
+        toast.success('Login successful!');
+
+        if (userType === 'customer') {
+          localStorage.setItem('user_id', JSON.stringify(res.data.user_id));
+          localStorage.setItem('customer_details', JSON.stringify(res.data));
+
+          router.push('/customer');
+        } else if (userType === 'store-owner') {
+          localStorage.setItem(
+            'store_owner_details',
+            JSON.stringify(res.data.data),
+          );
+          localStorage.setItem(
+            'store_owner_id',
+            JSON.stringify(res.data.data.storeOwner_id),
+          );
+
+          router.push('/store-owner');
         } else {
-          toast.error("Unknown role");
+          toast.error('Unknown role');
         }
       } else {
-        toast.error("Login failed");
-        setError("Email or password is incorrect");
+        toast.error('Login failed');
+        setError('Email or password is incorrect');
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.response?.data?.message || "Login failed");
-      toast.error(err?.response?.data?.message || "Login failed");
+      setError(err?.response?.data?.message || 'Login failed');
+      toast.error(err?.response?.data?.message || 'Login failed');
     }
   };
-  
+
   const handleSignup = async () => {
     try {
-      const res = await axios.post("http://localhost:8800/api/user/create", {
+      const res = await axios.post('http://localhost:8800/api/user/create', {
         fullname: signupName,
         email: signupEmail,
         password: signupPassword,
         role: userType,
-      })
+      });
 
-      console.log(res.data)
-      toast.success("Account created successfully!")
-      setShowSignupModal(false)
+      console.log(res.data);
+      toast.success('Account created successfully!');
+      setShowSignupModal(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Signup failed")
+      toast.error(err?.response?.data?.message || 'Signup failed');
     }
-  }
+  };
 
   return (
     <>
       <div className="flex items-center justify-center min-h-screen bg-muted/40">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">MAP MAP</CardTitle>
-            <CardDescription className="text-center">Login to access your account</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">
+              MAP MAP
+            </CardTitle>
+            <CardDescription className="text-center">
+              Login to access your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="customer" onValueChange={setUserType}>
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="customer" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="customer"
+                  className="flex items-center gap-2"
+                >
                   <User className="h-4 w-4" />
                   Customer
                 </TabsTrigger>
-                <TabsTrigger value="store-owner" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="store-owner"
+                  className="flex items-center gap-2"
+                >
                   <Store className="h-4 w-4" />
                   Store Owner
                 </TabsTrigger>
@@ -140,11 +158,11 @@ export default function LoginPage() {
                     <Input
                       id="email"
                       type={
-                        userType === "customer"
-                          ? "email"
-                          : userType === "store-owner"
-                          ? "email"
-                          : "text"
+                        userType === 'customer'
+                          ? 'email'
+                          : userType === 'store-owner'
+                          ? 'email'
+                          : 'text'
                       }
                       placeholder="your@email.com"
                       value={email}
@@ -155,7 +173,10 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Password</Label>
-                      <a href="#" className="text-sm text-primary hover:underline">
+                      <a
+                        href="#"
+                        className="text-sm text-primary hover:underline"
+                      >
                         Forgot password?
                       </a>
                     </div>
@@ -180,7 +201,6 @@ export default function LoginPage() {
                     </Button>
                   </TabsContent>
 
-
                   <TabsContent value="admin" className="mt-0 space-y-4">
                     <Button type="submit" className="w-full">
                       Login as Admin
@@ -191,14 +211,12 @@ export default function LoginPage() {
             </Tabs>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-          {error && (
-              <div className="text-red-500 text-sm text-center">
-                {error}
-              </div>
+            {error && (
+              <div className="text-red-500 text-sm text-center">{error}</div>
             )}
 
             <div className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{' '}
               <button
                 type="button"
                 onClick={() => setShowSignupModal(true)}
@@ -214,8 +232,6 @@ export default function LoginPage() {
               <p>Store Owner: owner@example.com / password</p>
               <p>Admin: admin@example.com / password</p>
             </div> */}
-
-           
           </CardFooter>
         </Card>
       </div>
@@ -225,7 +241,6 @@ export default function LoginPage() {
         <DialogContent>
           <DialogHeader className="flex items-center justify-between">
             <DialogTitle>Create an Account</DialogTitle>
-        
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -261,5 +276,5 @@ export default function LoginPage() {
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

@@ -1,51 +1,78 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { Home, MapPin, Heart, ShoppingCart, User, LogOut } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, MapPin, Heart, ShoppingCart, User, LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function CustomerSidebar() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const customerDetails = JSON.parse(
+    localStorage.getItem('customer_details') || '{}',
+  );
 
   const isActive = (path: string) => {
-    return pathname === path 
-  }
+    return pathname === path;
+  };
 
   const handleLogout = () => {
     // In a real app, this would handle authentication logout
-    router.push("/")
-  }
 
-  const NavItem = ({ href, icon: Icon, children }: { href: string; icon: any; children: React.ReactNode }) => (
+    localStorage.removeItem('store_owner_id');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('store_owner_details');
+    localStorage.removeItem('customer_details');
+
+    router.push('/');
+  };
+
+  const NavItem = ({
+    href,
+    icon: Icon,
+    children,
+  }: {
+    href: string;
+    icon: any;
+    children: React.ReactNode;
+  }) => (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent",
-        isActive(href) ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent',
+        isActive(href)
+          ? 'bg-accent text-accent-foreground'
+          : 'text-muted-foreground',
       )}
     >
       <Icon className="h-4 w-4" />
       <span>{children}</span>
     </Link>
-  )
+  );
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col gap-2">
       <div className="flex h-14 items-center border-b px-4">
-        <Link href="/customer" className="flex items-center gap-2 font-semibold">
+        <Link
+          href="/customer"
+          className="flex items-center gap-2 font-semibold"
+        >
           <MapPin className="h-5 w-5" />
-          <span>
-            Customer Dashboard
-          </span>
+          <span>Customer Dashboard</span>
         </Link>
-        <Button variant="ghost" size="icon" className="ml-auto md:hidden" onClick={handleLogout}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-auto md:hidden"
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
         </Button>
       </div>
@@ -63,7 +90,6 @@ export default function CustomerSidebar() {
           <NavItem href="/customer/cart" icon={ShoppingCart}>
             Cart
           </NavItem>
-         
         </nav>
       </div>
       <div className="mt-auto border-t p-4">
@@ -73,23 +99,32 @@ export default function CustomerSidebar() {
             <AvatarFallback>JD</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium">Jed Agayan</p>
+            <p className="text-sm font-medium">{customerDetails.fullname}</p>
             <p className="text-xs text-muted-foreground">Customer</p>
           </div>
-          <Button variant="ghost" size="icon" className="ml-auto" onClick={handleLogout}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto"
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
       {/* Mobile sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="md:hidden absolute top-4 left-4 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            className="md:hidden absolute top-4 left-4 z-10"
+          >
             <MapPin className="h-4 w-4" />
           </Button>
         </SheetTrigger>
@@ -103,6 +138,5 @@ export default function CustomerSidebar() {
         <SidebarContent />
       </div>
     </>
-  )
+  );
 }
-
