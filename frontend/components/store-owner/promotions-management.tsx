@@ -58,14 +58,13 @@ type Promotion = {
   endDate: string;
   discountType: string;
   discount: string;
-  description?: string; // optional
+  description: string; // optional
   storeOwner_id: number;
   status: string;
 };
 export default function PromotionsManagement() {
   const [showPromoDialog, setShowPromoDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<any>(null);
   const [promoToDelete, setPromoToDelete] = useState<any>(null);
 
   const [promotions, setPromotions] = useState<Promotion[]>([]); // Promotions state
@@ -73,13 +72,21 @@ export default function PromotionsManagement() {
     null,
   );
 
-  const [promotionName, setPromotionName] = useState('');
-  const [desc, setPromoDesc] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [discountValue, setDiscountValue] = useState('');
-  const [discountType, setDiscountType] = useState('percent'); // default type
-  const [status, setStatus] = useState('active'); // default status
+  const [promotionName, setPromotionName] = useState(
+    editingPromotion?.title || '',
+  );
+  const [desc, setPromoDesc] = useState(editingPromotion?.description || '');
+  const [startDate, setStartDate] = useState(editingPromotion?.startDate || '');
+  const [endDate, setEndDate] = useState(editingPromotion?.endDate || '');
+  const [discountValue, setDiscountValue] = useState(
+    editingPromotion?.discount || '',
+  );
+  const [discountType, setDiscountType] = useState(
+    editingPromotion?.discountType || 'percent',
+  );
+  const [status, setStatus] = useState(editingPromotion?.status || 'active');
+
+  const [promoID, setPromoID] = useState<number | undefined>(undefined);
 
   const storeOwnerID = localStorage.getItem('store_owner_id') || '';
 
@@ -95,6 +102,18 @@ export default function PromotionsManagement() {
   useEffect(() => {
     Promise.all([fetchPromotions()]);
   }, []);
+
+  useEffect(() => {
+    if (editingPromotion) {
+      setPromotionName(editingPromotion.title);
+      setPromoDesc(editingPromotion.description || '');
+      setStartDate(editingPromotion.startDate);
+      setEndDate(editingPromotion.endDate);
+      setDiscountValue(editingPromotion.discount);
+      setDiscountType(editingPromotion.discountType);
+      setStatus(editingPromotion.status);
+    }
+  }, [editingPromotion]);
 
   const handleSavePromotion = async () => {
     try {
@@ -135,30 +154,29 @@ export default function PromotionsManagement() {
     }
   };
 
-  const handleEditPromo = (promo: any) => {
-    setEditingPromo(promo);
+  const handleEditPromo = (promo: Promotion) => {
     setShowPromoDialog(true);
   };
 
-  const handleDeletePromo = (promo: any) => {
+  const handleDeletePromo = (promo: Promotion) => {
     setPromoToDelete(promo);
     setShowDeleteDialog(true);
+    setPromoID(promo.promotion_id);
   };
 
-  const confirmDeletePromo = () => {
+  const confirmDeletePromo = async () => {
     if (promoToDelete) {
-      setPromotions(
-        promotions.filter((promo) => promo.promotion_id !== promoToDelete.id),
-      );
       setShowDeleteDialog(false);
       setPromoToDelete(null);
-    }
-  };
 
-  const handleSavePromo = () => {
-    // In a real app, this would save to a database
-    setShowPromoDialog(false);
-    setEditingPromo(null);
+      try {
+        await axios.delete(`http://localhost:8800/api/promotions/${promoID}`);
+
+        fetchPromotions();
+      } catch (error) {
+        console.error('Error deleting image:', error);
+      }
+    }
   };
 
   return (
@@ -176,7 +194,18 @@ export default function PromotionsManagement() {
 
             <Button
               onClick={() => {
-                setEditingPromo(null);
+                if (editingPromotion) {
+                  setEditingPromotion(null);
+
+                  setPromotionName('');
+                  setPromoDesc('');
+                  setStartDate('');
+                  setEndDate('');
+                  setDiscountValue('');
+                  setDiscountType('percent');
+                  setStatus('active');
+                }
+
                 setShowPromoDialog(true);
               }}
             >
@@ -232,10 +261,10 @@ export default function PromotionsManagement() {
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
-                  {editingPromo ? 'Edit Promotion' : 'Add New Promotion'}
+                  {editingPromotion ? 'Edit Promotion' : 'Add New Promotion'}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingPromo
+                  {editingPromotion
                     ? 'Update promotion details'
                     : 'Create a new special offer for your customers'}
                 </DialogDescription>
@@ -331,7 +360,7 @@ export default function PromotionsManagement() {
                   Cancel
                 </Button>
                 <Button onClick={handleSavePromotion}>
-                  {editingPromo ? 'Save Changes' : 'Add Promotion'}
+                  {editingPromotion ? 'Save Changes' : 'Add Promotion'}
                 </Button>
               </DialogFooter>
             </DialogContent>

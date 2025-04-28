@@ -1,13 +1,33 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { Plus, Edit, Trash2, AlertCircle, DollarSign, FileText } from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from 'react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  AlertCircle,
+  DollarSign,
+  FileText,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +35,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,12 +45,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { dummyMenuItems } from "@/lib/dummy-data"
-import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
-import axios from "axios"
-
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { dummyMenuItems } from '@/lib/dummy-data';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import axios from 'axios';
 
 type Product = {
   category: string;
@@ -45,45 +64,40 @@ type Product = {
 };
 
 export default function ProductsManagement() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [showProductDialog, setShowProductDialog] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [productToDelete, setProductToDelete] = useState<any>(null)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
 
-
-
-  const [name, setName] = useState(editingProduct?.product_name || "");
-  const [category, setCategory] = useState(editingProduct?.category || "Main");
-  const [description, setDescription] = useState(editingProduct?.description || "");
+  const [name, setName] = useState(editingProduct?.product_name || '');
+  const [category, setCategory] = useState(editingProduct?.category || 'Main');
+  const [description, setDescription] = useState(
+    editingProduct?.description || '',
+  );
   const [price, setPrice] = useState(editingProduct?.price || 0);
   const [inventory, setInventory] = useState(editingProduct?.inventory || 100);
-  
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [productID, setProductID] = useState<number | null>(null);
 
-
-  const storeOwnerID = localStorage.getItem("store_owner_id") || "";
-
+  const storeOwnerID = localStorage.getItem('store_owner_id') || '';
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:8800/api/products");
-      console.log(response.data)
-      setProducts(response.data)
-
+      const response = await axios.get('http://localhost:8800/api/products');
+      console.log(response.data);
+      setProducts(response.data);
     } catch (error) {
-      console.error("Error fetching customers:", error)
+      console.error('Error fetching customers:', error);
     }
-  }
+  };
 
   useEffect(() => {
-    Promise.all([fetchProducts()])
-  }, [])
-
+    Promise.all([fetchProducts()]);
+  }, []);
 
   useEffect(() => {
     if (editingProduct) {
@@ -98,58 +112,61 @@ export default function ProductsManagement() {
 
   const handleSaveProduct = async () => {
     try {
-
-
-
       // Create formData for the product
       const productData = new FormData();
-      productData.append("product_name", name);
-      productData.append("category", category);
-      productData.append("description", description);
-      productData.append("price", price.toString());
-      productData.append("inventory", inventory.toString());
-      productData.append("storeOwner_id", storeOwnerID);
+      productData.append('product_name', name);
+      productData.append('category', category);
+      productData.append('description', description);
+      productData.append('price', price.toString());
+      productData.append('inventory', inventory.toString());
+      productData.append('storeOwner_id', storeOwnerID);
 
       if (imageFile) {
-        productData.append("product_image", imageFile);
+        productData.append('product_image', imageFile);
       }
 
       if (editingProduct) {
         // If editing, update the product
-        await axios.put(`http://localhost:8800/api/products/${editingProduct.product_id}`, productData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
+        await axios.put(
+          `http://localhost:8800/api/products/${editingProduct.product_id}`,
+          productData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           },
-        });
-        console.log("Product updated successfully");
+        );
+        console.log('Product updated successfully');
       } else {
         // If adding, create a new product
-        await axios.post("http://localhost:8800/api/products/upload", productData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
+        await axios.post(
+          'http://localhost:8800/api/products/upload',
+          productData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           },
-        });
+        );
 
-        console.log("Product added successfully");
+        console.log('Product added successfully');
       }
 
       fetchProducts();
-      setName("");
-      setCategory("Main");
-      setDescription("");
+      setName('');
+      setCategory('Main');
+      setDescription('');
       setPrice(0);
       setInventory(100);
       setImage(null);
       setImageFile(null);
 
-
       setShowProductDialog(false); // Close the dialog
     } catch (error) {
-      console.error("Error saving product:", error);
+      console.error('Error saving product:', error);
       // Optionally show an error message
     }
   };
-
 
   const handleChangeImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files ? event.target.files[0] : null;
@@ -167,25 +184,24 @@ export default function ProductsManagement() {
   };
 
   const handleEditProduct = (product: Product) => {
-    setEditingProduct(product)
-    setShowProductDialog(true)
-    setProductID(product.product_id)
-  }
+    setEditingProduct(product);
+    setShowProductDialog(true);
+    setProductID(product.product_id);
+  };
 
   const handleDeleteProduct = async (product: Product) => {
-    setProductToDelete(product)
-    setShowDeleteDialog(true)
-    setProductID(product.product_id)
-
-  }
+    setProductToDelete(product);
+    setShowDeleteDialog(true);
+    setProductID(product.product_id);
+  };
 
   const confirmDeleteProduct = async () => {
     if (productToDelete) {
-      setProducts(products.filter((product) => product.product_id !== productToDelete.id))
-      setShowDeleteDialog(false)
-      setProductToDelete(null)
-
-
+      setProducts(
+        products.filter((product) => product.product_id !== productToDelete.id),
+      );
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
 
       try {
         await axios.delete(`http://localhost:8800/api/products/${productID}`);
@@ -194,9 +210,8 @@ export default function ProductsManagement() {
       } catch (error) {
         console.error('Error deleting image:', error);
       }
-
     }
-  }
+  };
 
   // const handleSaveProduct = () => {
   //   // In a real app, this would save to a database
@@ -212,13 +227,15 @@ export default function ProductsManagement() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold mb-2">Products Management</h1>
-              <p className="text-muted-foreground">Manage all products in your store</p>
+              <p className="text-muted-foreground">
+                Manage all products in your store
+              </p>
             </div>
 
             <Button
               onClick={() => {
-                setEditingProduct(null)
-                setShowProductDialog(true)
+                setEditingProduct(null);
+                setShowProductDialog(true);
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -230,18 +247,21 @@ export default function ProductsManagement() {
             {products.map((product) => (
               <Card key={product.product_id}>
                 <CardHeader className="pb-2">
-
                   <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
-                    <img src={`http://localhost:8800/api/${product.product_image}`} alt={`Image ${product.product_id}`} className="object-cover w-full h-full" />
+                    <img
+                      src={`http://localhost:8800/api/${product.product_image}`}
+                      alt={`Image ${product.product_id}`}
+                      className="object-cover w-full h-full"
+                    />
                   </div>
-
 
                   <div className="flex justify-between">
                     <CardTitle>{product.product_name}</CardTitle>
                     <Badge variant="secondary">{product.category}</Badge>
                   </div>
                   <CardDescription className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3" />{product.price.toFixed(2)}
+                    <DollarSign className="h-3 w-3" />
+                    {product.price.toFixed(2)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-2">
@@ -249,11 +269,19 @@ export default function ProductsManagement() {
                 </CardContent>
                 <CardFooter>
                   <div className="flex gap-2 w-full">
-                    <Button variant="outline" className="flex-1" onClick={() => handleEditProduct(product)}>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleEditProduct(product)}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                    <Button variant="destructive" size="icon" onClick={() => handleDeleteProduct(product)}>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteProduct(product)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -265,9 +293,13 @@ export default function ProductsManagement() {
           <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+                <DialogTitle>
+                  {editingProduct ? 'Edit Product' : 'Add New Product'}
+                </DialogTitle>
                 <DialogDescription>
-                  {editingProduct ? "Update product information" : "Add a new product to your store"}
+                  {editingProduct
+                    ? 'Update product information'
+                    : 'Add a new product to your store'}
                 </DialogDescription>
               </DialogHeader>
 
@@ -278,14 +310,16 @@ export default function ProductsManagement() {
                     <Input
                       id="name"
                       value={name}
-
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Delicious Burger"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Select value={category} onValueChange={(value) => setCategory(value)}>
+                    <Select
+                      value={category}
+                      onValueChange={(value) => setCategory(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -317,7 +351,9 @@ export default function ProductsManagement() {
                       type="number"
                       step="0.01"
                       value={price}
-                      onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setPrice(parseFloat(e.target.value) || 0)
+                      }
                       placeholder="9.99"
                     />
                   </div>
@@ -327,13 +363,13 @@ export default function ProductsManagement() {
                       id="inventory"
                       type="number"
                       value={inventory}
-                      onChange={(e) => setInventory(parseInt(e.target.value, 10) || 0)}
+                      onChange={(e) =>
+                        setInventory(parseInt(e.target.value, 10) || 0)
+                      }
                       placeholder="100"
                     />
                   </div>
                 </div>
-
-
 
                 <div className="space-y-2">
                   <Label>Product Image</Label>
@@ -352,12 +388,16 @@ export default function ProductsManagement() {
                   {/* File upload area */}
                   <div className="border-2 border-dashed rounded-md p-2 text-center">
                     <FileText className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Drag and drop image here or click to browse</p>
+                    <p className="text-sm text-muted-foreground">
+                      Drag and drop image here or click to browse
+                    </p>
                     <Button
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => document.getElementById("file-upload")?.click()}
+                      onClick={() =>
+                        document.getElementById('file-upload')?.click()
+                      }
                     >
                       Upload Image
                     </Button>
@@ -365,27 +405,32 @@ export default function ProductsManagement() {
                       id="file-upload"
                       type="file"
                       accept="image/*"
-                      style={{ display: "none" }}
+                      style={{ display: 'none' }}
                       onChange={handleChangeImage}
-
                     />
                   </div>
                 </div>
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowProductDialog(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowProductDialog(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleSaveProduct}>
-                  {editingProduct ? "Save Changes" : "Add Product"}
+                  {editingProduct ? 'Save Changes' : 'Add Product'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
           {/* Delete confirmation dialog */}
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+          >
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
@@ -393,7 +438,8 @@ export default function ProductsManagement() {
                   Delete Product
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete "{productToDelete?.name}"? This action cannot be undone.
+                  Are you sure you want to delete "{productToDelete?.name}"?
+                  This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -410,6 +456,5 @@ export default function ProductsManagement() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
