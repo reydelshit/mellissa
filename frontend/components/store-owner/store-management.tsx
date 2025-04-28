@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { dummyStores } from "@/lib/dummy-data"
 import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
 import InteractiveMap from "@/components/map/interactive-map"
+import axios from "axios"
 
 
 
@@ -41,9 +42,16 @@ type StoreType = {
   openingHours: string
 }
 
-interface StoreOwnerDetails {
-  store: StoreType;
+
+
+type ImageTypeGallery = {
+  media_id: string
+  path: string
+  pathName: string
+  created_at: string
+  storeOwner_id: string
 }
+
 
 export default function StoreManagement() {
   // For demo purposes, we'll assume the store owner owns the first store
@@ -52,6 +60,20 @@ export default function StoreManagement() {
   const [showPromoDialog, setShowPromoDialog] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
+
+
+  // store forms 
+  const [storeName, setStoreName] = useState(store?.storeName || '');
+  const [storeCategory, setStoreCategory] = useState(store?.storeCategory || '');
+  const [description, setDescription] = useState(store?.description || '');
+  const [openingHours, setOpeningHours] = useState(store?.openingHours || '');
+  const [phone, setPhone] = useState(store?.phone || '');
+  const [email, setEmail] = useState(store?.email || '');
+
+  // Image upload states
+  const [images, setImages] = useState<ImageTypeGallery[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -65,6 +87,33 @@ export default function StoreManagement() {
 
   useEffect(() => {
     console.log('details', store);
+  }, [store]);
+
+
+  const fetchMediaGallery = async () => {
+    try {
+      const response = await axios.get("http://localhost:8800/api/media-gallery");
+      console.log(response.data)
+      setImages(response.data.media)
+    } catch (error) {
+      console.error("Error fetching customers:", error)
+    }
+  }
+
+  useEffect(() => {
+    Promise.all([fetchMediaGallery()])
+  }, []) 
+
+
+  useEffect(() => {
+    if (store) {
+      setStoreName(store.storeName || '');
+      setStoreCategory(store.storeCategory || '');
+      setDescription(store.description || '');
+      setOpeningHours(store.openingHours || '');
+      setPhone(store.phone || '');
+      setEmail(store.email || '');
+    }
   }, [store]);
 
 
@@ -117,16 +166,106 @@ export default function StoreManagement() {
     }
   })
 
-  const handleSaveStore = () => {
-    // In a real app, this would save to a database
-    setShowEditDialog(false)
-    setShowSuccessMessage(true)
+  const handleSaveStore = async () => {
+    try {
+      const response = await axios.put(`http://localhost:8800/api/store-owner/${store?.storeOwner_id}`, {
+        ownerName: store?.ownerName,
+        storeName,
+        storeCategory,
+        description,
+        openingHours,
+        phone,
+        email,
+      });
 
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setShowSuccessMessage(false)
-    }, 3000)
-  }
+      console.log('Store updated:', response.data);
+      setShowEditDialog(false);
+      setShowSuccessMessage(true);
+
+      // Save to localStorage
+      localStorage.setItem("store_owner_details", JSON.stringify({
+        ...store,
+        storeName,
+        storeCategory,
+        description,
+        openingHours,
+        phone,
+        email,
+      }));
+
+      // ✅ Also update your React state
+      setStore(prev => prev ? ({
+        ...prev,
+        storeName,
+        storeCategory,
+        description,
+        openingHours,
+        phone,
+        email,
+      }) : null);
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Failed to update store:', error);
+    }
+  };
+
+
+  // Function to handle the file upload
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (file) {
+      const formData = new FormData();
+      
+      // Include the additional fields required by the backend
+      formData.append('media_image', file);
+      formData.append('mediaName', 'oh yeah'); 
+      formData.append('storeOwner_id', store?.storeOwner_id || ''); 
+  
+      // Set image preview
+      setImagePreview(URL.createObjectURL(file));
+  
+      setIsUploading(true);
+  
+      try {
+        const response = await axios.post('http://localhost:8800/api/media-gallery/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+  
+        const uploadedImagePath = response.data.mediaPath;
+        console.log('Image uploaded successfully:', uploadedImagePath);
+        setImages((prevImages) => [...prevImages, uploadedImagePath]);
+
+
+        fetchMediaGallery();
+        // Reset the input field
+        e.target.value = '';
+        setImagePreview(null);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+  
+
+  const handleDelete = async (imagePath: string) => {
+    try {
+      await axios.delete(`http://localhost:8800/api/media-gallery/${imagePath}`);
+      setImages((prevImages) => prevImages.filter((image) => image.path !== imagePath));
+
+      fetchMediaGallery();
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  };
+  
+
 
   const handleAddPromotion = () => {
     // In a real app, this would add a promotion to the database
@@ -247,7 +386,7 @@ export default function StoreManagement() {
                   <CardDescription>View your store location in the mall map</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <InteractiveMap markers={storeMarkers} onMarkerClick={() => {}} />
+                  <InteractiveMap markers={storeMarkers} onMarkerClick={() => { }} />
                   <div className="mt-4 p-4 bg-muted rounded-lg">
                     <h3 className="font-medium mb-2">Map Legend</h3>
                     <div className="flex flex-wrap gap-4">
@@ -277,29 +416,58 @@ export default function StoreManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="relative group">
-                        <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
-                          <p className="text-xs text-gray-500">Image {i}</p>
+                    {images.length === 0 ? (
+                      <p className="col-span-4 text-center text-gray-500">No images uploaded</p>
+                    ) : (
+                      images.filter((img) => img.storeOwner_id === store?.storeOwner_id).map((image, index) => (
+                        <div key={index} className="relative group">
+                          <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
+                            <img src={`http://localhost:8800/api/${image.path}`} alt={`Image ${index + 1}`} className="object-cover w-full h-full" />
+                          </div>
+                          <div className="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-white"
+                              onClick={() => handleDelete(image.media_id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <Button variant="ghost" size="icon" className="text-white">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
 
-                  <div className="border-2 border-dashed rounded-md p-6 text-center">
-                    <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Drag and drop images here or click to browse</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      Upload Images
-                    </Button>
+                  <div className="space-y-4">
+                    <label className="block cursor-pointer">
+                      <div className="border-2 border-dashed rounded-md p-6 text-center hover:bg-gray-50 transition-colors">
+                        <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">Click to browse and upload an image</p>
+
+                        {/* Input field for file upload */}
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="cursor-pointer hidden"
+                          required
+                        />
+                      </div>
+                    </label>
+
+                    {/* Display image preview */}
+                    {imagePreview && (
+                      <div className="mt-4">
+                        <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-md" />
+                      </div>
+                    )}
+
+            
                   </div>
                 </CardContent>
               </Card>
+
             </TabsContent>
           </Tabs>
         </div>
@@ -317,11 +485,16 @@ export default function StoreManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Store Name</Label>
-                <Input id="name" defaultValue={store?.storeName} />
+                <Input
+                  id="name"
+                  value={storeName}
+                  onChange={(e) => setStoreName(e.target.value)}
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select defaultValue={store?.storeCategory}>
+                <Select value={storeCategory} onValueChange={setStoreCategory}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -337,17 +510,31 @@ export default function StoreManagement() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" defaultValue={store?.description} rows={4} />
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="hours">Opening Hours</Label>
-              <Input id="hours" placeholder="Mon-Fri: 7AM-7PM, Sat-Sun: 8AM-6PM" defaultValue={store?.openingHours} />
+              <Input
+                id="hours"
+                placeholder="Mon-Fri: 7AM-7PM, Sat-Sun: 8AM-6PM"
+                value={openingHours}
+                onChange={(e) => setOpeningHours(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Contact Phone</Label>
-              <Input id="phone" defaultValue={store?.phone} />
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -355,7 +542,8 @@ export default function StoreManagement() {
               <Input
                 id="email"
                 type="email"
-                defaultValue={store?.email}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>

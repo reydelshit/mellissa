@@ -168,7 +168,7 @@ export default function AdminDashboard() {
 
   const fetchStoreOwners = async () => {
     try {
-      const response = await axios.get("http://localhost:8800/store-owner")
+      const response = await axios.get("http://localhost:8800/api/store-owner")
       console.log(response.data)
       setStoreOwners(response.data)
     } catch (error) {
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get("http://localhost:8800/user")
+      const response = await axios.get("http://localhost:8800/api/user")
       console.log(response.data)
       setCustomers(response.data)
     } catch (error) {
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
     e.preventDefault()
   
     try {
-      const res = await axios.post("http://localhost:8800/store-owner/create", {
+      const res = await axios.post("http://localhost:8800/api/store-owner/create", {
         ownerName,
         storeName,
         email,

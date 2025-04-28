@@ -50,9 +50,9 @@ export default function LoginPage() {
     let loginUrl = "";
   
     if (userType === "customer") {
-      loginUrl = "http://localhost:8800/user/login";
+      loginUrl = "http://localhost:8800/api/user/login";
     } else if (userType === "store-owner") {
-      loginUrl = "http://localhost:8800/store-owner/login";
+      loginUrl = "http://localhost:8800/api/store-owner/login";
     }
   
     try {
@@ -63,7 +63,7 @@ export default function LoginPage() {
   
       console.log("res:", res.data);
       if (res.data.status === "success") {
-        const user = res.data.data[0];
+        const user = res.data.data;
   
         localStorage.setItem("user_id", JSON.stringify(user.user_id));
         localStorage.setItem("role", JSON.stringify(user.role));
@@ -92,7 +92,7 @@ export default function LoginPage() {
   
   const handleSignup = async () => {
     try {
-      const res = await axios.post("http://localhost:8800/user/create", {
+      const res = await axios.post("http://localhost:8800/api/user/create", {
         fullname: signupName,
         email: signupEmail,
         password: signupPassword,
