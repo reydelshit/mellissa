@@ -9,7 +9,7 @@ const router = Router();
 // Set up multer storage for images
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads/gallery');
+    const uploadPath = path.join(__dirname, '../uploads/products');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -24,11 +24,17 @@ const upload = multer({ storage });
 
 // CREATE product
 router.post(
-  '/',
+  '/upload',
   upload.single('product_image'),
   async (req: Request, res: Response): Promise<void> => {
-    const { product_name, price, description, category, storeOwner_id } =
-      req.body;
+    const {
+      product_name,
+      price,
+      description,
+      category,
+      inventory,
+      storeOwner_id,
+    } = req.body;
 
     const productImagePath = req.file
       ? `uploads/products/${req.file.filename}`
@@ -39,6 +45,7 @@ router.post(
       !price ||
       !description ||
       !category ||
+      !inventory ||
       !storeOwner_id ||
       !productImagePath
     ) {
@@ -49,13 +56,14 @@ router.post(
     try {
       const connection = await databaseConnectionPromise;
       const [result]: any = await connection.query(
-        `INSERT INTO products (product_name, price, description, category, created_at, storeOwner_id, product_image)
-         VALUES (?, ?, ?, ?, NOW(), ?, ?)`,
+        `INSERT INTO products (product_name, price, description, category, inventory, created_at, storeOwner_id, product_image)
+         VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)`,
         [
           product_name,
           price,
           description,
           category,
+          inventory,
           storeOwner_id,
           productImagePath,
         ],
@@ -119,8 +127,14 @@ router.put(
   upload.single('product_image'),
   async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-    const { product_name, price, description, category, storeOwner_id } =
-      req.body;
+    const {
+      product_name,
+      price,
+      description,
+      category,
+      inventory,
+      storeOwner_id,
+    } = req.body;
 
     const productImagePath = req.file
       ? `uploads/products/${req.file.filename}`
@@ -129,25 +143,37 @@ router.put(
     try {
       const connection = await databaseConnectionPromise;
 
-      // If new image uploaded
+      // Update query with proper placeholders
       let query = `
-      UPDATE products 
-      SET product_name = ?, price = ?, description = ?, category = ?, storeOwner_id = ?
-      ${productImagePath ? `, product_image = ?` : ''}
-      WHERE product_id = ?
-    `;
+        UPDATE products 
+        SET product_name = ?, price = ?, description = ?, category = ?, inventory = ?, storeOwner_id = ?
+        ${productImagePath ? `, product_image = ?` : ''}
+        WHERE product_id = ?
+      `;
+
+      // Parameters for the query
       let params = productImagePath
         ? [
             product_name,
             price,
             description,
             category,
+            inventory,
             storeOwner_id,
             productImagePath,
-            id,
+            id, // Ensure this is passed last for WHERE clause
           ]
-        : [product_name, price, description, category, storeOwner_id, id];
+        : [
+            product_name,
+            price,
+            description,
+            category,
+            inventory,
+            storeOwner_id,
+            id, // Ensure this is passed last for WHERE clause
+          ];
 
+      // Run the query
       const [result]: any = await connection.query(query, params);
 
       if (result.affectedRows === 0) {

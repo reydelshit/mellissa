@@ -74,6 +74,7 @@ export default function LoginPage() {
           router.push("/customer");
         } else if (userType === "store-owner") {
           localStorage.setItem("store_owner_details", JSON.stringify(user));
+          localStorage.setItem("store_owner_id", JSON.stringify(user.storeOwner_id));
 
           router.push("/store-owner");
         } else {
