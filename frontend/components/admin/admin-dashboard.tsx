@@ -42,20 +42,26 @@ import {
 } from 'react-zoom-pan-pinch';
 import { toast } from 'sonner';
 
-type StoreOwner = {
-  storeOwner_id: string;
+interface StoreDetails {
+  storeOwner_id: number;
+  stall_no: string;
   ownerName: string;
   storeName: string;
   email: string;
   phone: string;
-  password: string;
   storeCategory: string;
-  location: string;
-  floor: string;
+  floor: number;
   size: string;
-  created_at: string;
-  stall_no: string;
-};
+  location: string;
+  description: string;
+  openingHours: string;
+  media: Array<{
+    media_id: number;
+    path: string;
+    pathName: string;
+    created_at: string;
+  }>;
+}
 
 type CustomerType = {
   user_id: string;
@@ -120,7 +126,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [storeCategory, setStoreCategory] = useState('retail');
 
-  const [storeOwnersFromDB, setStoreOwners] = useState<StoreOwner[]>([]);
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetails[]>([]);
   const [customersFromDB, setCustomers] = useState<CustomerType[]>([]);
 
   const [showSecondFloor, setShowSecondFloor] = useState(false);
@@ -135,108 +141,8 @@ export default function AdminDashboard() {
 
   const [stalls, setStalls] = useState<any[]>([]);
 
-  // Create map markers from stores
-  const storeMarkers = dummyStores.map((store, index) => {
-    // Assign stores to different floors and positions
-    const floor = index % 2 === 0 ? 1 : 2;
-
-    // Calculate positions based on index
-    let x, y;
-    if (floor === 1) {
-      // Position stores on first floor
-      if (index % 4 === 0) {
-        x = 17.5; // Store A
-        y = 20;
-      } else if (index % 4 === 2) {
-        x = 17.5; // Store B
-        y = 55;
-      } else if (index % 4 === 1) {
-        x = 72.5; // Store C
-        y = 20;
-      } else {
-        x = 72.5; // Store D
-        y = 55;
-      }
-    } else {
-      // Position stores on second floor
-      if (index % 3 === 0) {
-        x = 17.5; // Store E
-        y = 25;
-      } else if (index % 3 === 1) {
-        x = 17.5; // Store F
-        y = 70;
-      } else {
-        x = 65; // Food Court
-        y = 47.5;
-      }
-    }
-
-    return {
-      id: store.id,
-      x,
-      y,
-      label: store.name,
-      floor,
-      color: 'bg-primary',
-    };
-  });
-
-  // Add available spaces
-  const availableSpaces = [
-    {
-      id: 'available1',
-      name: 'Space 101',
-      floor: 1,
-      location: 'First Floor, North Wing',
-      size: '1,200 sq ft',
-      x: 50,
-      y: 30,
-      label: 'Available Space 101',
-      color: 'bg-yellow-500',
-    },
-    {
-      id: 'available2',
-      name: 'Space 201',
-      floor: 2,
-      location: 'Second Floor, East Wing',
-      size: '1,500 sq ft',
-      x: 50,
-      y: 60,
-      label: 'Available Space 201',
-      color: 'bg-yellow-500',
-    },
-    {
-      id: 'available3',
-      name: 'Space 102',
-      floor: 1,
-      location: 'First Floor, South Wing',
-      size: '800 sq ft',
-      x: 30,
-      y: 70,
-      label: 'Available Space 102',
-      color: 'bg-yellow-500',
-    },
-  ];
-
-  const availableSpaceMarkers = availableSpaces.map((space) => ({
-    id: space.id,
-    x: space.x,
-    y: space.y,
-    label: space.label,
-    floor: space.floor,
-    color: space.color,
-  }));
-
-  const allMarkers = [...storeMarkers, ...availableSpaceMarkers];
-
-  const handleMapMarkerClick = (markerId: string) => {
-    // Check if it's an available space
-    const space = availableSpaces.find((space) => space.id === markerId);
-    if (space) {
-      setSelectedSpace(space);
-      setShowAddOwnerDialog(true);
-    }
-  };
+  const [viewStallDetails, setViewStallDetails] = useState({} as StoreDetails);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const fetchStoreOwners = async () => {
     try {
@@ -336,6 +242,8 @@ export default function AdminDashboard() {
     size: `${Math.floor(Math.random() * (1350 - 1150 + 1)) + 1150} sq`,
   }));
 
+  const hasImages = viewStallDetails.media && viewStallDetails.media.length > 0;
+
   return (
     <div className="flex h-screen w-full">
       {/* <AdminSidebar /> */}
@@ -407,7 +315,7 @@ export default function AdminDashboard() {
                             >
                               <DEFDEFSEC />
                               {updatedStalSecondFllot.map((stall, index) => {
-                                let fillColor = '#22c55e'; // Default to blue (occupied)
+                                let fillColor = '#eab308'; // Default to black (occupied)
 
                                 const stallData = stalls.find(
                                   (s) =>
@@ -415,7 +323,7 @@ export default function AdminDashboard() {
                                 );
 
                                 if (stallData) {
-                                  fillColor = '#3b82f6 '; // Green (available)
+                                  fillColor = '#222831  '; // Yellow (available)
                                 }
 
                                 return (
@@ -469,7 +377,7 @@ export default function AdminDashboard() {
                               <DEFDEFSEC />
 
                               {updatedStallsGround.map((stall, index) => {
-                                let fillColor = '#222831'; // Default to blue (occupied)
+                                let fillColor = '#eab308'; // Default to black (occupied)
 
                                 const stallData = storeOwnersFromDB.find(
                                   (s) =>
@@ -477,7 +385,7 @@ export default function AdminDashboard() {
                                 );
 
                                 if (stallData) {
-                                  fillColor = '#eab308  '; // Green (available)
+                                  fillColor = '#222831  '; // Yellow (available)
                                 }
 
                                 return (
@@ -491,7 +399,12 @@ export default function AdminDashboard() {
                                         size: stall.size,
                                       });
                                       setSelectedStalls(stall.id);
-                                      setShowAddOwnerDialog(true);
+                                      if (stallData) {
+                                        setShowModal(true);
+                                        setViewStallDetails(stallData);
+                                      } else {
+                                        setShowAddOwnerDialog(true);
+                                      }
                                     }}
                                     id={stall.id}
                                     d={stall.d}
@@ -511,7 +424,7 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className="mt-4 p-4 bg-muted rounded-lg absolute right-5 top-5 ">
+                  <div className="mt-2 p-4 bg-muted rounded-lg absolute right-5 top-5 w-1/3">
                     <h3 className="font-medium mb-2">Map Legend</h3>
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
@@ -544,7 +457,7 @@ export default function AdminDashboard() {
                   </div>
                   <Button
                     onClick={() => {
-                      setSelectedSpace(availableSpaces[0]);
+                      // setSelectedSpace(availableSpaces[0]);
                       setShowAddOwnerDialog(true);
                     }}
                   >
@@ -678,6 +591,169 @@ export default function AdminDashboard() {
           </Tabs>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b flex justify-between items-center">
+              <h1 className="text-2xl font-semibold">Store Information</h1>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Store Images */}
+              {hasImages && (
+                <div className="space-y-4">
+                  <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={`http://localhost:8800/api/${viewStallDetails.media[selectedImage]?.path}`}
+                      alt={viewStallDetails.media[selectedImage]?.pathName}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {viewStallDetails.media.map((image, index) => (
+                      <button
+                        key={image.media_id}
+                        onClick={() => setSelectedImage(index)}
+                        className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden ${
+                          selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                      >
+                        <img
+                          src={`http://localhost:8800/api/${image.path}`}
+                          alt={image.pathName}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Basic Information */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Stall Number
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.stall_no}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Owner Name
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.ownerName}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Store Name
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.storeName}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.email}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.phone}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category
+                    </label>
+                    <div className="mt-1">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {viewStallDetails.storeCategory}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Space Information */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  Space Information
+                </h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Location
+                    </span>
+                    <p className="mt-1">{viewStallDetails.location}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Size
+                    </span>
+                    <p className="mt-1">{viewStallDetails.size}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Floor
+                    </span>
+                    <p className="mt-1">
+                      {viewStallDetails.floor === 1
+                        ? 'Ground Floor'
+                        : `${viewStallDetails.floor}nd Floor`}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Opening Hours
+                    </span>
+                    <p className="mt-1">{viewStallDetails.openingHours}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Description</h2>
+                <p className="text-gray-600">{viewStallDetails.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Store Owner Dialog */}
       <Dialog open={showAddOwnerDialog} onOpenChange={setShowAddOwnerDialog}>

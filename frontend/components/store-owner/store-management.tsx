@@ -1,13 +1,34 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { MapPin, Upload, Plus, Edit, Trash2, Clock, Star, Save } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from 'react';
+import {
+  MapPin,
+  Upload,
+  Plus,
+  Edit,
+  Trash2,
+  Clock,
+  Star,
+  Save,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -15,56 +36,51 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { dummyStores } from "@/lib/dummy-data"
-import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
-import InteractiveMap from "@/components/map/interactive-map"
-import axios from "axios"
-
-
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { dummyStores } from '@/lib/dummy-data';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import InteractiveMap from '@/components/map/interactive-map';
+import axios from 'axios';
 
 type StoreType = {
-  created_at: string
-  description: string
-  id: string
-  location: string
-  ownerName: string
-  storeName: string
-  storeCategory: string
-  storeOwner_id: string
-  email: string
-  phone: string
-  floor: number
-  size: number
+  created_at: string;
+  description: string;
+  id: string;
+  location: string;
+  ownerName: string;
+  storeName: string;
+  storeCategory: string;
+  storeOwner_id: string;
+  email: string;
+  phone: string;
+  floor: number;
+  size: number;
 
-  openingHours: string
-}
-
-
+  openingHours: string;
+};
 
 type ImageTypeGallery = {
-  media_id: string
-  path: string
-  pathName: string
-  created_at: string
-  storeOwner_id: string
-}
-
+  media_id: string;
+  path: string;
+  pathName: string;
+  created_at: string;
+  storeOwner_id: string;
+};
 
 export default function StoreManagement() {
   // For demo purposes, we'll assume the store owner owns the first store
   const [store, setStore] = useState<StoreType | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showPromoDialog, setShowPromoDialog] = useState(false)
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showPromoDialog, setShowPromoDialog] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-
-
-  // store forms 
+  // store forms
   const [storeName, setStoreName] = useState(store?.storeName || '');
-  const [storeCategory, setStoreCategory] = useState(store?.storeCategory || '');
+  const [storeCategory, setStoreCategory] = useState(
+    store?.storeCategory || '',
+  );
   const [description, setDescription] = useState(store?.description || '');
   const [openingHours, setOpeningHours] = useState(store?.openingHours || '');
   const [phone, setPhone] = useState(store?.phone || '');
@@ -76,8 +92,10 @@ export default function StoreManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storeOwnerDefaultDetails = localStorage.getItem("store_owner_details");
+    if (typeof window !== 'undefined') {
+      const storeOwnerDefaultDetails = localStorage.getItem(
+        'store_owner_details',
+      );
       if (storeOwnerDefaultDetails) {
         const parsed = JSON.parse(storeOwnerDefaultDetails);
         setStore(parsed as StoreType);
@@ -89,21 +107,21 @@ export default function StoreManagement() {
     console.log('details', store);
   }, [store]);
 
-
   const fetchMediaGallery = async () => {
     try {
-      const response = await axios.get("http://localhost:8800/api/media-gallery");
-      console.log(response.data)
-      setImages(response.data.media)
+      const response = await axios.get(
+        'http://localhost:8800/api/media-gallery',
+      );
+      console.log(response.data);
+      setImages(response.data.media);
     } catch (error) {
-      console.error("Error fetching customers:", error)
+      console.error('Error fetching customers:', error);
     }
-  }
+  };
 
   useEffect(() => {
-    Promise.all([fetchMediaGallery()])
-  }, []) 
-
+    Promise.all([fetchMediaGallery()]);
+  }, []);
 
   useEffect(() => {
     if (store) {
@@ -116,45 +134,44 @@ export default function StoreManagement() {
     }
   }, [store]);
 
-
   // Create map markers from all stores
   const storeMarkers = dummyStores.map((s, index) => {
     // Assign stores to different floors and positions
-    const floor = index % 2 === 0 ? 1 : 2
+    const floor = index % 2 === 0 ? 1 : 2;
 
     // Calculate positions based on index
-    let x, y
+    let x, y;
     if (floor === 1) {
       // Position stores on first floor
       if (index % 4 === 0) {
-        x = 17.5 // Store A
-        y = 20
+        x = 17.5; // Store A
+        y = 20;
       } else if (index % 4 === 2) {
-        x = 17.5 // Store B
-        y = 55
+        x = 17.5; // Store B
+        y = 55;
       } else if (index % 4 === 1) {
-        x = 72.5 // Store C
-        y = 20
+        x = 72.5; // Store C
+        y = 20;
       } else {
-        x = 72.5 // Store D
-        y = 55
+        x = 72.5; // Store D
+        y = 55;
       }
     } else {
       // Position stores on second floor
       if (index % 3 === 0) {
-        x = 17.5 // Store E
-        y = 25
+        x = 17.5; // Store E
+        y = 25;
       } else if (index % 3 === 1) {
-        x = 17.5 // Store F
-        y = 70
+        x = 17.5; // Store F
+        y = 70;
       } else {
-        x = 65 // Food Court
-        y = 47.5
+        x = 65; // Food Court
+        y = 47.5;
       }
     }
 
     // Highlight the current store owner's store
-    const isCurrentStore = s.id === store?.id
+    const isCurrentStore = s.id === store?.id;
 
     return {
       id: s.id,
@@ -162,84 +179,95 @@ export default function StoreManagement() {
       y,
       label: s.name,
       floor,
-      color: isCurrentStore ? "bg-green-500" : "bg-primary",
-    }
-  })
+      color: isCurrentStore ? 'bg-green-500' : 'bg-primary',
+    };
+  });
 
   const handleSaveStore = async () => {
     try {
-      const response = await axios.put(`http://localhost:8800/api/store-owner/${store?.storeOwner_id}`, {
-        ownerName: store?.ownerName,
-        storeName,
-        storeCategory,
-        description,
-        openingHours,
-        phone,
-        email,
-      });
+      const response = await axios.put(
+        `http://localhost:8800/api/store-owner/${store?.storeOwner_id}`,
+        {
+          ownerName: store?.ownerName,
+          storeName,
+          storeCategory,
+          description,
+          openingHours,
+          phone,
+          email,
+        },
+      );
 
       console.log('Store updated:', response.data);
       setShowEditDialog(false);
       setShowSuccessMessage(true);
 
       // Save to localStorage
-      localStorage.setItem("store_owner_details", JSON.stringify({
-        ...store,
-        storeName,
-        storeCategory,
-        description,
-        openingHours,
-        phone,
-        email,
-      }));
+      localStorage.setItem(
+        'store_owner_details',
+        JSON.stringify({
+          ...store,
+          storeName,
+          storeCategory,
+          description,
+          openingHours,
+          phone,
+          email,
+        }),
+      );
 
       // ✅ Also update your React state
-      setStore(prev => prev ? ({
-        ...prev,
-        storeName,
-        storeCategory,
-        description,
-        openingHours,
-        phone,
-        email,
-      }) : null);
+      setStore((prev) =>
+        prev
+          ? {
+              ...prev,
+              storeName,
+              storeCategory,
+              description,
+              openingHours,
+              phone,
+              email,
+            }
+          : null,
+      );
 
       // Hide success message after 3 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
       }, 3000);
-
     } catch (error) {
       console.error('Failed to update store:', error);
     }
   };
-
 
   // Function to handle the file upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
     if (file) {
       const formData = new FormData();
-      
+
       // Include the additional fields required by the backend
       formData.append('media_image', file);
-      formData.append('mediaName', 'oh yeah'); 
-      formData.append('storeOwner_id', store?.storeOwner_id || ''); 
-  
+      formData.append('mediaName', 'oh yeah');
+      formData.append('storeOwner_id', store?.storeOwner_id || '');
+
       // Set image preview
       setImagePreview(URL.createObjectURL(file));
-  
+
       setIsUploading(true);
-  
+
       try {
-        const response = await axios.post('http://localhost:8800/api/media-gallery/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-  
+        const response = await axios.post(
+          'http://localhost:8800/api/media-gallery/upload',
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          },
+        );
+
         const uploadedImagePath = response.data.mediaPath;
         console.log('Image uploaded successfully:', uploadedImagePath);
         setImages((prevImages) => [...prevImages, uploadedImagePath]);
-
 
         fetchMediaGallery();
         // Reset the input field
@@ -252,33 +280,34 @@ export default function StoreManagement() {
       }
     }
   };
-  
 
   const handleDelete = async (imagePath: string) => {
     try {
-      await axios.delete(`http://localhost:8800/api/media-gallery/${imagePath}`);
-      setImages((prevImages) => prevImages.filter((image) => image.path !== imagePath));
+      await axios.delete(
+        `http://localhost:8800/api/media-gallery/${imagePath}`,
+      );
+      setImages((prevImages) =>
+        prevImages.filter((image) => image.path !== imagePath),
+      );
 
       fetchMediaGallery();
     } catch (error) {
       console.error('Error deleting image:', error);
     }
   };
-  
-
 
   const handleAddPromotion = () => {
     // In a real app, this would add a promotion to the database
-    setShowPromoDialog(false)
+    setShowPromoDialog(false);
 
     // Show success message
-    setShowSuccessMessage(true)
+    setShowSuccessMessage(true);
 
     // Hide success message after 3 seconds
     setTimeout(() => {
-      setShowSuccessMessage(false)
-    }, 3000)
-  }
+      setShowSuccessMessage(false);
+    }, 3000);
+  };
 
   return (
     <div className="flex h-screen">
@@ -288,7 +317,9 @@ export default function StoreManagement() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold mb-2">My Store</h1>
-              <p className="text-muted-foreground">Manage your store information and settings</p>
+              <p className="text-muted-foreground">
+                Manage your store information and settings
+              </p>
             </div>
 
             <Button onClick={() => setShowEditDialog(true)}>
@@ -303,7 +334,10 @@ export default function StoreManagement() {
               role="alert"
             >
               <strong className="font-bold">Success!</strong>
-              <span className="block sm:inline"> Your changes have been saved.</span>
+              <span className="block sm:inline">
+                {' '}
+                Your changes have been saved.
+              </span>
             </div>
           )}
 
@@ -326,7 +360,11 @@ export default function StoreManagement() {
                 <CardContent className="space-y-4">
                   <div>
                     <h3 className="font-medium mb-2">Description</h3>
-                    <p className="font-semithin italic">{(store?.description ?? "").length > 0 ? store?.description : 'Empty store description'}</p>
+                    <p className="font-semithin italic">
+                      {(store?.description ?? '').length > 0
+                        ? store?.description
+                        : 'Empty store description'}
+                    </p>
                   </div>
 
                   <div>
@@ -335,14 +373,18 @@ export default function StoreManagement() {
                       <Clock className="h-4 w-4" />
                       {store?.openingHours?.length ?? 0 > 0
                         ? store?.openingHours
-                        : "Not specified"}
+                        : 'Not specified'}
                     </p>
                   </div>
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-medium">Current Promotions</h3>
-                      <Button variant="outline" size="sm" onClick={() => setShowPromoDialog(true)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPromoDialog(true)}
+                      >
                         <Plus className="h-4 w-4 mr-1" />
                         Add Promotion
                       </Button>
@@ -383,10 +425,15 @@ export default function StoreManagement() {
               <Card>
                 <CardHeader>
                   <CardTitle>Store Location</CardTitle>
-                  <CardDescription>View your store location in the mall map</CardDescription>
+                  <CardDescription>
+                    View your store location in the mall map
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <InteractiveMap markers={storeMarkers} onMarkerClick={() => { }} />
+                  <InteractiveMap
+                    markers={storeMarkers}
+                    onMarkerClick={() => {}}
+                  />
                   <div className="mt-4 p-4 bg-muted rounded-lg">
                     <h3 className="font-medium mb-2">Map Legend</h3>
                     <div className="flex flex-wrap gap-4">
@@ -400,8 +447,8 @@ export default function StoreManagement() {
                       </div>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      <span className="font-medium">Your store location:</span> {store?.location}, Floor{" "}
-                      {store?.floor}
+                      <span className="font-medium">Your store location:</span>{' '}
+                      {store?.location}, Floor {store?.floor}
                     </p>
                   </div>
                 </CardContent>
@@ -412,30 +459,42 @@ export default function StoreManagement() {
               <Card>
                 <CardHeader>
                   <CardTitle>Media Gallery</CardTitle>
-                  <CardDescription>Upload and manage images for your store</CardDescription>
+                  <CardDescription>
+                    Upload and manage images for your store
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     {images.length === 0 ? (
-                      <p className="col-span-4 text-center text-gray-500">No images uploaded</p>
+                      <p className="col-span-4 text-center text-gray-500">
+                        No images uploaded
+                      </p>
                     ) : (
-                      images.filter((img) => img.storeOwner_id === store?.storeOwner_id).map((image, index) => (
-                        <div key={index} className="relative group">
-                          <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
-                            <img src={`http://localhost:8800/api/${image.path}`} alt={`Image ${index + 1}`} className="object-cover w-full h-full" />
+                      images
+                        .filter(
+                          (img) => img.storeOwner_id === store?.storeOwner_id,
+                        )
+                        .map((image, index) => (
+                          <div key={index} className="relative group">
+                            <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
+                              <img
+                                src={`http://localhost:8800/api/${image.path}`}
+                                alt={`Image ${index + 1}`}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                            <div className="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white"
+                                onClick={() => handleDelete(image.media_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="absolute inset-0 bg-black/50 rounded-md opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-white"
-                              onClick={() => handleDelete(image.media_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))
+                        ))
                     )}
                   </div>
 
@@ -443,7 +502,9 @@ export default function StoreManagement() {
                     <label className="block cursor-pointer">
                       <div className="border-2 border-dashed rounded-md p-6 text-center hover:bg-gray-50 transition-colors">
                         <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Click to browse and upload an image</p>
+                        <p className="text-sm text-muted-foreground">
+                          Click to browse and upload an image
+                        </p>
 
                         {/* Input field for file upload */}
                         <Input
@@ -459,15 +520,16 @@ export default function StoreManagement() {
                     {/* Display image preview */}
                     {imagePreview && (
                       <div className="mt-4">
-                        <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-md" />
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-32 object-cover rounded-md"
+                        />
                       </div>
                     )}
-
-            
                   </div>
                 </CardContent>
               </Card>
-
             </TabsContent>
           </Tabs>
         </div>
@@ -478,7 +540,9 @@ export default function StoreManagement() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit Store Information</DialogTitle>
-            <DialogDescription>Update your store details and settings</DialogDescription>
+            <DialogDescription>
+              Update your store details and settings
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -565,7 +629,9 @@ export default function StoreManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Promotion</DialogTitle>
-            <DialogDescription>Create a new promotion for your store</DialogDescription>
+            <DialogDescription>
+              Create a new promotion for your store
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -576,7 +642,10 @@ export default function StoreManagement() {
 
             <div className="space-y-2">
               <Label htmlFor="promo-desc">Description</Label>
-              <Textarea id="promo-desc" placeholder="Get 20% off on all items" />
+              <Textarea
+                id="promo-desc"
+                placeholder="Get 20% off on all items"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -616,6 +685,5 @@ export default function StoreManagement() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-
