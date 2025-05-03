@@ -14,17 +14,16 @@ export default function CustomerSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const customerDetails = JSON.parse(
-    localStorage.getItem('customer_details') || '{}',
-  );
+  const customerDetails =
+    typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('customer_details') || '{}')
+      : {};
 
   const isActive = (path: string) => {
     return pathname === path;
   };
 
   const handleLogout = () => {
-    // In a real app, this would handle authentication logout
-
     localStorage.removeItem('store_owner_id');
     localStorage.removeItem('role');
     localStorage.removeItem('user_id');
