@@ -92,3 +92,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+path {
+  cursor: pointer;
+}
+
+path:hover {
+  fill: #077a7d;
+  transition: all 0.3s;
+}

@@ -49,7 +49,7 @@ export default function PathContainer({
 
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white text-black transform rotate-45" />
           </div>
-          <MapPin className="text-white" size={24} />
+          <MapPin className="text-yellow-500" size={24} />
         </div>
       </div>,
       document.body,
