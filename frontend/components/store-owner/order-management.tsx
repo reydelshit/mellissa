@@ -1,13 +1,26 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { ShoppingBag, Eye, Download, Check, Clock, X } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from 'react';
+import { ShoppingBag, Eye, Download, Check, Clock, X } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -15,72 +28,118 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { dummyOrders } from "@/lib/dummy-data"
-import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { dummyOrders } from '@/lib/dummy-data';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import axios from 'axios';
+
+type OrderTypes = {
+  order_id: string;
+  user_id: string;
+  total_price: string;
+  status: string;
+  created_at: string;
+  fullname: string;
+  delivery_address: string;
+  payment_method: string;
+  items: Array<{
+    product_id: string;
+    quantity: number;
+    price: number;
+  }>;
+};
 
 export default function OrderManagement() {
-  const [orders, setOrders] = useState(dummyOrders)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedOrder, setSelectedOrder] = useState<any>(null)
-  const [showOrderDetails, setShowOrderDetails] = useState(false)
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [orders, setOrders] = useState<OrderTypes[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const fetchPromotions = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/orders');
+      setOrders(response.data);
+      console.log('Fetched orders:', response.data);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+    }
+  };
+
+  useEffect(() => {
+    Promise.all([fetchPromotions()]);
+  }, []);
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = order.fullname
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter
+    const matchesStatus =
+      statusFilter === 'all' || order.status === statusFilter;
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
-  const handleUpdateOrderStatus = (orderId: string, status: string) => {
-    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status } : order)))
+  const handleUpdateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      // Optimistically update UI
+      setOrders(
+        orders.map((order) =>
+          order.order_id === orderId ? { ...order, status } : order,
+        ),
+      );
 
-    // If we're updating the currently selected order, update it too
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status })
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status });
+      }
+
+      // Send update to backend
+      await axios.put(`http://localhost:8800/api/orders/status/${orderId}`, {
+        status,
+      });
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      // Optional: Revert UI update or show a toast if needed
     }
-  }
+  };
 
   const viewOrderDetails = (order: any) => {
-    setSelectedOrder(order)
-    setShowOrderDetails(true)
-  }
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Check className="h-4 w-4 mr-1" />
-      case "pending":
-        return <Clock className="h-4 w-4 mr-1" />
-      case "cancelled":
-        return <X className="h-4 w-4 mr-1" />
+      case 'completed':
+        return <Check className="h-4 w-4 mr-1" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 mr-1" />;
+      case 'cancelled':
+        return <X className="h-4 w-4 mr-1" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case "completed":
-        return "success"
-      case "pending":
-        return "warning"
-      case "cancelled":
-        return "destructive"
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+        return 'destructive';
       default:
-        return "default"
+        return 'default';
     }
-  }
+  };
 
   const handleExportData = () => {
     // In a real app, this would generate a CSV or PDF
-    alert("Exporting order data...")
-  }
+    alert('Exporting order data...');
+  };
 
   return (
     <div className="flex h-screen">
@@ -89,7 +148,9 @@ export default function OrderManagement() {
         <div className="container p-6 space-y-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">Order Management</h1>
-            <p className="text-muted-foreground">View and manage customer orders</p>
+            <p className="text-muted-foreground">
+              View and manage customer orders
+            </p>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -104,7 +165,10 @@ export default function OrderManagement() {
             </div>
 
             <div className="flex gap-2 w-full md:w-auto">
-              <Select defaultValue="all" onValueChange={(value) => setStatusFilter(value)}>
+              <Select
+                defaultValue="all"
+                onValueChange={(value) => setStatusFilter(value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -151,35 +215,60 @@ export default function OrderManagement() {
                     <TableBody>
                       {filteredOrders.length > 0 ? (
                         filteredOrders.map((order) => (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
-                            <TableCell>{order.customer}</TableCell>
+                          <TableRow key={order.order_id}>
+                            <TableCell className="font-medium">
+                              {order.order_id}
+                            </TableCell>
+                            <TableCell>{order.fullname}</TableCell>
                             <TableCell>{order.items.length} items</TableCell>
-                            <TableCell>${order.total.toFixed(2)}</TableCell>
-                            <TableCell>{order.date}</TableCell>
                             <TableCell>
-                              <Badge variant={getStatusVariant(order.status)} className="flex w-fit items-center">
+                              ${Number(order.total_price).toFixed(2)}
+                            </TableCell>
+                            <TableCell>{order.created_at}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={getStatusVariant(order.status)}
+                                className="flex w-fit items-center"
+                              >
                                 {getStatusIcon(order.status)}
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                {order.status.charAt(0).toUpperCase() +
+                                  order.status.slice(1)}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => viewOrderDetails(order)}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => viewOrderDetails(order)}
+                                >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                                 <Select
                                   value={order.status}
-                                  onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                                  onValueChange={(value) =>
+                                    handleUpdateOrderStatus(
+                                      order.order_id,
+                                      value,
+                                    )
+                                  }
                                 >
                                   <SelectTrigger className="w-[130px]">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="processing">Processing</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    <SelectItem value="pending">
+                                      Pending
+                                    </SelectItem>
+                                    <SelectItem value="processing">
+                                      Processing
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      Completed
+                                    </SelectItem>
+                                    <SelectItem value="cancelled">
+                                      Cancelled
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -188,7 +277,10 @@ export default function OrderManagement() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                          <TableCell
+                            colSpan={7}
+                            className="text-center py-6 text-muted-foreground"
+                          >
                             No orders found matching your criteria
                           </TableCell>
                         </TableRow>
@@ -214,25 +306,40 @@ export default function OrderManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.filter((order) => order.status === "pending").length > 0 ? (
+                      {orders.filter((order) => order.status === 'pending')
+                        .length > 0 ? (
                         orders
-                          .filter((order) => order.status === "pending")
+                          .filter((order) => order.status === 'pending')
                           .map((order) => (
-                            <TableRow key={order.id}>
-                              <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
-                              <TableCell>{order.customer}</TableCell>
+                            <TableRow key={order.order_id}>
+                              <TableCell className="font-medium">
+                                {order.order_id}
+                              </TableCell>
+                              <TableCell>{order.fullname}</TableCell>
                               <TableCell>{order.items.length} items</TableCell>
-                              <TableCell>${order.total.toFixed(2)}</TableCell>
-                              <TableCell>{order.date}</TableCell>
+                              <TableCell>
+                                {' '}
+                                ${Number(order.total_price).toFixed(2)}
+                              </TableCell>
+                              <TableCell>{order.created_at}</TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  <Button variant="ghost" size="icon" onClick={() => viewOrderDetails(order)}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => viewOrderDetails(order)}
+                                  >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                   <Button
-                                   variant={"default"}
+                                    variant={'default'}
                                     size="sm"
-                                    onClick={() => handleUpdateOrderStatus(order.id, "completed")}
+                                    onClick={() =>
+                                      handleUpdateOrderStatus(
+                                        order.order_id,
+                                        'completed',
+                                      )
+                                    }
                                   >
                                     <Check className="h-4 w-4 mr-1" />
                                     Complete
@@ -243,7 +350,10 @@ export default function OrderManagement() {
                           ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-6 text-muted-foreground"
+                          >
                             No pending orders
                           </TableCell>
                         </TableRow>
@@ -270,7 +380,10 @@ export default function OrderManagement() {
                     </TableHeader>
                     <TableBody>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-6 text-muted-foreground"
+                        >
                           No orders in processing
                         </TableCell>
                       </TableRow>
@@ -295,18 +408,28 @@ export default function OrderManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.filter((order) => order.status === "completed").length > 0 ? (
+                      {orders.filter((order) => order.status === 'completed')
+                        .length > 0 ? (
                         orders
-                          .filter((order) => order.status === "completed")
+                          .filter((order) => order.status === 'completed')
                           .map((order) => (
-                            <TableRow key={order.id}>
-                              <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
-                              <TableCell>{order.customer}</TableCell>
+                            <TableRow key={order.order_id}>
+                              <TableCell className="font-medium">
+                                {order.order_id}
+                              </TableCell>
+                              <TableCell>{order.fullname}</TableCell>
                               <TableCell>{order.items.length} items</TableCell>
-                              <TableCell>${order.total.toFixed(2)}</TableCell>
-                              <TableCell>{order.date}</TableCell>
                               <TableCell>
-                                <Button variant="ghost" size="icon" onClick={() => viewOrderDetails(order)}>
+                                {' '}
+                                ${Number(order.total_price).toFixed(2)}
+                              </TableCell>
+                              <TableCell>{order.created_at}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => viewOrderDetails(order)}
+                                >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </TableCell>
@@ -314,7 +437,10 @@ export default function OrderManagement() {
                           ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-6 text-muted-foreground"
+                          >
                             No completed orders
                           </TableCell>
                         </TableRow>
@@ -340,18 +466,28 @@ export default function OrderManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.filter((order) => order.status === "cancelled").length > 0 ? (
+                      {orders.filter((order) => order.status === 'cancelled')
+                        .length > 0 ? (
                         orders
-                          .filter((order) => order.status === "cancelled")
+                          .filter((order) => order.status === 'cancelled')
                           .map((order) => (
-                            <TableRow key={order.id}>
-                              <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
-                              <TableCell>{order.customer}</TableCell>
+                            <TableRow key={order.order_id}>
+                              <TableCell className="font-medium">
+                                {order.order_id}
+                              </TableCell>
+                              <TableCell>{order.fullname}</TableCell>
                               <TableCell>{order.items.length} items</TableCell>
-                              <TableCell>${order.total.toFixed(2)}</TableCell>
-                              <TableCell>{order.date}</TableCell>
                               <TableCell>
-                                <Button variant="ghost" size="icon" onClick={() => viewOrderDetails(order)}>
+                                {' '}
+                                ${Number(order.total_price).toFixed(2)}
+                              </TableCell>
+                              <TableCell>{order.created_at}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => viewOrderDetails(order)}
+                                >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </TableCell>
@@ -359,7 +495,10 @@ export default function OrderManagement() {
                           ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-6 text-muted-foreground"
+                          >
                             No cancelled orders
                           </TableCell>
                         </TableRow>
@@ -376,7 +515,7 @@ export default function OrderManagement() {
               <DialogHeader>
                 <DialogTitle>Order Details</DialogTitle>
                 <DialogDescription>
-                  Order #{selectedOrder?.id.slice(0, 8)} - {selectedOrder?.date}
+                  Order #{selectedOrder?.id} - {selectedOrder?.date}
                 </DialogDescription>
               </DialogHeader>
 
@@ -385,15 +524,21 @@ export default function OrderManagement() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium">Status</h3>
-                      <Badge variant={getStatusVariant(selectedOrder.status)} className="mt-1 flex w-fit items-center">
+                      <Badge
+                        variant={getStatusVariant(selectedOrder.status)}
+                        className="mt-1 flex w-fit items-center"
+                      >
                         {getStatusIcon(selectedOrder.status)}
-                        {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                        {selectedOrder.status.charAt(0).toUpperCase() +
+                          selectedOrder.status.slice(1)}
                       </Badge>
                     </div>
 
                     <Select
                       value={selectedOrder.status}
-                      onValueChange={(value) => handleUpdateOrderStatus(selectedOrder.id, value)}
+                      onValueChange={(value) =>
+                        handleUpdateOrderStatus(selectedOrder.id, value)
+                      }
                     >
                       <SelectTrigger className="w-[150px]">
                         <SelectValue />
@@ -412,16 +557,24 @@ export default function OrderManagement() {
                       <h3 className="font-medium mb-2">Customer Information</h3>
                       <p className="text-sm">Name: {selectedOrder.customer}</p>
                       <p className="text-sm">
-                        Email: {selectedOrder.customer.toLowerCase().replace(/\s/g, "")}@example.com
+                        Email:{' '}
+                        {selectedOrder.customer
+                          .toLowerCase()
+                          .replace(/\s/g, '')}
+                        @example.com
                       </p>
                       <p className="text-sm">Phone: (555) 123-4567</p>
                     </div>
 
                     <div>
                       <h3 className="font-medium mb-2">Delivery Information</h3>
-                      <p className="text-sm">Address: 123 Main St, Anytown, USA</p>
+                      <p className="text-sm">
+                        Address: 123 Main St, Anytown, USA
+                      </p>
                       <p className="text-sm">Delivery Method: Standard</p>
-                      <p className="text-sm">Estimated Delivery: 30-45 minutes</p>
+                      <p className="text-sm">
+                        Estimated Delivery: 30-45 minutes
+                      </p>
                     </div>
                   </div>
 
@@ -442,7 +595,9 @@ export default function OrderManagement() {
                             <TableCell>{item.name}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>${item.price.toFixed(2)}</TableCell>
-                            <TableCell>${(item.price * item.quantity).toFixed(2)}</TableCell>
+                            <TableCell>
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -464,23 +619,33 @@ export default function OrderManagement() {
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
-                      <span>${(selectedOrder.total + 2.99 + selectedOrder.total * 0.08).toFixed(2)}</span>
+                      <span>
+                        $
+                        {(
+                          selectedOrder.total +
+                          2.99 +
+                          selectedOrder.total * 0.08
+                        ).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
 
               <DialogFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => setShowOrderDetails(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowOrderDetails(false)}
+                >
                   Close
                 </Button>
 
-                {selectedOrder && selectedOrder.status === "pending" && (
+                {selectedOrder && selectedOrder.status === 'pending' && (
                   <Button
-                    variant={"default"}
+                    variant={'default'}
                     onClick={() => {
-                      handleUpdateOrderStatus(selectedOrder.id, "completed")
-                      setShowOrderDetails(false)
+                      handleUpdateOrderStatus(selectedOrder.id, 'completed');
+                      setShowOrderDetails(false);
                     }}
                   >
                     <Check className="h-4 w-4 mr-2" />
@@ -493,6 +658,5 @@ export default function OrderManagement() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

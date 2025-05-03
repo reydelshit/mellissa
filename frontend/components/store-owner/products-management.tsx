@@ -244,50 +244,62 @@ export default function ProductsManagement() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <Card key={product.product_id}>
-                <CardHeader className="pb-2">
-                  <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
-                    <img
-                      src={`http://localhost:8800/api/${product.product_image}`}
-                      alt={`Image ${product.product_id}`}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
+            {products.filter(
+              (prod) => String(prod.storeOwner_id) === storeOwnerID,
+            ).length > 0 ? (
+              products
+                .filter((prod) => String(prod.storeOwner_id) === storeOwnerID)
+                .map((product) => (
+                  <Card key={product.product_id}>
+                    <CardHeader className="pb-2">
+                      <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
+                        <img
+                          src={`http://localhost:8800/api/${product.product_image}`}
+                          alt={`Image ${product.product_id}`}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
 
-                  <div className="flex justify-between">
-                    <CardTitle>{product.product_name}</CardTitle>
-                    <Badge variant="secondary">{product.category}</Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3" />
-                    {product.price.toFixed(2)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-sm">{product.description}</p>
-                </CardContent>
-                <CardFooter>
-                  <div className="flex gap-2 w-full">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleEditProduct(product)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeleteProduct(product)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+                      <div className="flex justify-between">
+                        <CardTitle>{product.product_name}</CardTitle>
+                        <Badge variant="secondary">{product.category}</Badge>
+                      </div>
+                      <CardDescription className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        {product.price.toFixed(2)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm">{product.description}</p>
+                    </CardContent>
+                    <CardFooter>
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleEditProduct(product)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))
+            ) : (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center">
+                <p className="text-muted-foreground mt-[5rem]">
+                  No products available. Please add a product.
+                </p>
+              </div>
+            )}
           </div>
 
           <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>

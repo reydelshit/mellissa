@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Heart, Star, Clock, ShoppingCart, Plus, Minus } from 'lucide-react';
+import CustomerSidebar from '@/components/customer/customer-sidebar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -10,20 +11,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dummyStores, dummyMenuItems } from '@/lib/dummy-data';
-import CustomerSidebar from '@/components/customer/customer-sidebar';
-import { toast } from '@/components/ui/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+
 import axios from 'axios';
+import { Clock, Heart, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Promotion, StoreDetailsType } from '../admin/admin-dashboard';
+import { toast } from 'sonner';
 
 export default function StoreDetails({ storeId }: { storeId: string }) {
   const [store, setStore] = useState<StoreDetailsType | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [cart, setCart] = useState<any[]>([]);
+  const [cart, setCart] = useState<{ product_id: string; quantity: number }[]>(
+    () => {
+      const storedCart = localStorage.getItem('cart');
+      return storedCart ? JSON.parse(storedCart) : [];
+    },
+  );
   const [loading, setLoading] = useState(true);
 
   const [selectedImage, setSelectedImage] = useState(0);
@@ -39,6 +43,10 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
       console.error('Error fetching store owners:', error);
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
 
   useEffect(() => {
     if (!storeId || storeOwnersFromDB.length === 0) return;
@@ -61,65 +69,40 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
   const toggleFavorite = (storeId: string) => {
     if (favorites.includes(storeId)) {
       setFavorites(favorites.filter((id) => id !== storeId));
-      toast({
-        title: 'Removed from favorites',
+      toast('Removed from favorites', {
         description: 'This store has been removed from your favorites.',
       });
     } else {
       setFavorites([...favorites, storeId]);
-      toast({
-        title: 'Added to favorites',
+      toast('Added to favorites', {
         description: 'This store has been added to your favorites.',
       });
     }
   };
 
   const addToCart = (item: any) => {
-    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+    setCart((prevCart) => {
+      // Check if the item already exists in the cart
+      const existingItem = prevCart.find(
+        (cartItem) => cartItem.product_id === item.product_id,
+      );
 
-    if (existingItem) {
-      setCart(
-        cart.map((cartItem) =>
-          cartItem.id === item.id
+      if (existingItem) {
+        // If the item exists, update its quantity
+        return prevCart.map((cartItem) =>
+          cartItem.product_id === item.product_id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem,
-        ),
-      );
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
-
-    toast({
-      title: 'Added to cart',
-      description: `${item.name} has been added to your cart.`,
-      action: (
-        <ToastAction altText="View Cart" asChild>
-          <a href="/customer/cart">View Cart</a>
-        </ToastAction>
-      ),
+        );
+      } else {
+        // If the item doesn't exist, add it with quantity 1
+        return [...prevCart, { ...item, quantity: 1 }];
+      }
     });
-  };
 
-  const updateQuantity = (itemId: string, change: number) => {
-    const existingItem = cart.find((item) => item.id === itemId);
-
-    if (!existingItem) return;
-
-    const newQuantity = existingItem.quantity + change;
-
-    if (newQuantity <= 0) {
-      setCart(cart.filter((item) => item.id !== itemId));
-      toast({
-        title: 'Removed from cart',
-        description: `${existingItem.name} has been removed from your cart.`,
-      });
-    } else {
-      setCart(
-        cart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item,
-        ),
-      );
-    }
+    toast('Added to cart successful', {
+      description: 'This item has been added to your cart.',
+    });
   };
 
   if (loading) {
@@ -283,7 +266,8 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     {store.products.map((item) => {
                       const cartItem = cart.find(
-                        (i) => i.id === item.product_id,
+                        (i: { product_id: string; quantity: number }) =>
+                          i.product_id === String(item.product_id),
                       );
 
                       return (
@@ -318,47 +302,14 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                             </CardContent>
 
                             <CardFooter className="pt-2 pb-4">
-                              {cartItem ? (
-                                <div className="flex items-center justify-between w-full">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-9 w-9 rounded-full border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                    onClick={() =>
-                                      updateQuantity(
-                                        String(item.product_id),
-                                        -1,
-                                      )
-                                    }
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-
-                                  <span className="font-medium text-gray-900 dark:text-white text-lg">
-                                    {cartItem.quantity}
-                                  </span>
-
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-9 w-9 rounded-full border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                    onClick={() =>
-                                      updateQuantity(String(item.product_id), 1)
-                                    }
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="default"
-                                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2 transition-all duration-200 shadow-sm hover:shadow group-hover:scale-[1.02]"
-                                  onClick={() => addToCart(item)}
-                                >
-                                  <ShoppingCart className="h-4 w-4 mr-2" />
-                                  Add to Cart
-                                </Button>
-                              )}
+                              <Button
+                                variant="default"
+                                className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2 transition-all duration-200 shadow-sm hover:shadow group-hover:scale-[1.02]"
+                                onClick={() => addToCart(item)}
+                              >
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Add to Cart
+                              </Button>
                             </CardFooter>
                           </Card>
 

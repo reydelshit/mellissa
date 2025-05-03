@@ -215,46 +215,58 @@ export default function PromotionsManagement() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {promotions.map((promo) => (
-              <Card key={promo.promotion_id}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between">
-                    <CardTitle>{promo.title}</CardTitle>
-                    <Badge variant="success">Active</Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {promo.startDate} to {promo.endDate}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-sm mb-2">{promo.description}</p>
-                  <div className="flex items-center gap-1 text-sm font-medium">
-                    <Percent className="h-4 w-4" />
-                    <span>{promo.discount} Discount</span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <div className="flex gap-2 w-full">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleEditPromo(promo)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeletePromo(promo)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+            {promotions.filter(
+              (promo) => String(promo.storeOwner_id) === storeOwnerID,
+            ).length > 0 ? (
+              promotions
+                .filter((promo) => String(promo.storeOwner_id) === storeOwnerID)
+                .map((promo) => (
+                  <Card key={promo.promotion_id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between">
+                        <CardTitle>{promo.title}</CardTitle>
+                        <Badge variant="success">Active</Badge>
+                      </div>
+                      <CardDescription className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {promo.startDate} to {promo.endDate}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <p className="text-sm mb-2">{promo.description}</p>
+                      <div className="flex items-center gap-1 text-sm font-medium">
+                        <Percent className="h-4 w-4" />
+                        <span>{promo.discount} Discount</span>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleEditPromo(promo)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeletePromo(promo)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))
+            ) : (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center">
+                <p className="text-muted-foreground mt-[5rem]">
+                  No promotions available. Please add a promotion.
+                </p>
+              </div>
+            )}
           </div>
 
           <Dialog open={showPromoDialog} onOpenChange={setShowPromoDialog}>
