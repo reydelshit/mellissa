@@ -113,6 +113,8 @@ export default function StoreMap() {
       store.location.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const [hoveredStallId, setHoveredStallId] = useState<string | null>(null);
+
   const toggleFavorite = (e: React.MouseEvent, storeId: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -231,7 +233,12 @@ export default function StoreMap() {
                             );
 
                             if (stallData) {
-                              fillColor = '#222831  '; // Yellow (available)
+                              fillColor = '#222831'; // Stall is occupied
+                            }
+
+                            // If hovered, override the color
+                            if (hoveredStallId === String(stall.id)) {
+                              fillColor = '#FE7743'; // Hover color
                             }
 
                             return (
@@ -245,7 +252,12 @@ export default function StoreMap() {
                                     size: stall.size,
                                   });
                                   setSelectedStalls(stall.id);
-                                  // setShowAddOwnerDialog(true);
+                                  if (stallData) {
+                                    setShowModal(true);
+                                    setViewStallDetails(stallData);
+                                  } else {
+                                    // setShowAddOwnerDialog(true);
+                                  }
                                 }}
                                 id={stall.id}
                                 d={stall.d}
@@ -292,7 +304,12 @@ export default function StoreMap() {
                             );
 
                             if (stallData) {
-                              fillColor = '#222831  '; // Yellow (available)
+                              fillColor = '#222831'; // Stall is occupied
+                            }
+
+                            // If hovered, override the color
+                            if (hoveredStallId === String(stall.id)) {
+                              fillColor = '#FE7743'; // Hover color
                             }
 
                             return (
@@ -348,7 +365,11 @@ export default function StoreMap() {
                   visibleStores.map((store) => (
                     <Card
                       key={store.storeOwner_id}
-                      className="cursor-pointer hover:border-primary transition-colors"
+                      className="cursor-pointer hover:border-primary transition-colors hover:border-[#FE7743]"
+                      onMouseEnter={() =>
+                        setHoveredStallId(String(store.stall_no))
+                      }
+                      onMouseLeave={() => setHoveredStallId(null)}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
