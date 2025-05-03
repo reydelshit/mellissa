@@ -4,7 +4,7 @@ import { databaseConnectionPromise } from '../connections/DBConnection';
 const router = Router();
 
 // CREATE promotion
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+router.post('/create', async (req: Request, res: Response): Promise<void> => {
   const {
     title,
     startDate,

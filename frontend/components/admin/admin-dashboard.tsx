@@ -44,7 +44,36 @@ import {
 } from 'react-zoom-pan-pinch';
 import { toast } from 'sonner';
 
-export interface StoreDetails {
+export interface Media {
+  media_id: number;
+  path: string;
+  pathName: string;
+  created_at: string;
+}
+
+export interface Product {
+  product_id: number;
+  product_name: string;
+  price: number;
+  description: string;
+  category: string;
+  inventory: number;
+  created_at: string;
+  product_image: string;
+}
+
+export interface Promotion {
+  promotion_id: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  discountType: string;
+  discount: number;
+  description: string;
+  status: string;
+}
+
+export interface StoreDetailsType {
   storeOwner_id: number;
   stall_no: string;
   ownerName: string;
@@ -57,12 +86,9 @@ export interface StoreDetails {
   location: string;
   description: string;
   openingHours: string;
-  media: Array<{
-    media_id: number;
-    path: string;
-    pathName: string;
-    created_at: string;
-  }>;
+  media: Media[];
+  products: Product[];
+  promotions: Promotion[];
 }
 
 type CustomerType = {
@@ -130,7 +156,7 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [storeCategory, setStoreCategory] = useState('retail');
 
-  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetails[]>([]);
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
   const [customersFromDB, setCustomers] = useState<CustomerType[]>([]);
 
   const [showSecondFloor, setShowSecondFloor] = useState(false);
@@ -145,7 +171,9 @@ export default function AdminDashboard() {
 
   const [stalls, setStalls] = useState<any[]>([]);
 
-  const [viewStallDetails, setViewStallDetails] = useState({} as StoreDetails);
+  const [viewStallDetails, setViewStallDetails] = useState(
+    {} as StoreDetailsType,
+  );
   const [selectedImage, setSelectedImage] = useState(0);
 
   const fetchStoreOwners = async () => {

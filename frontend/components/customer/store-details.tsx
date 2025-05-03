@@ -1,86 +1,126 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Heart, Star, Clock, ShoppingCart, Plus, Minus } from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { dummyStores, dummyMenuItems } from "@/lib/dummy-data"
-import CustomerSidebar from "@/components/customer/customer-sidebar"
-import { toast } from "@/components/ui/use-toast"
-import { ToastAction } from "@/components/ui/toast"
+import { useState, useEffect } from 'react';
+import { Heart, Star, Clock, ShoppingCart, Plus, Minus } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { dummyStores, dummyMenuItems } from '@/lib/dummy-data';
+import CustomerSidebar from '@/components/customer/customer-sidebar';
+import { toast } from '@/components/ui/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import axios from 'axios';
+import { Promotion, StoreDetailsType } from '../admin/admin-dashboard';
 
 export default function StoreDetails({ storeId }: { storeId: string }) {
-  const [store, setStore] = useState<any>(null)
-  const [favorites, setFavorites] = useState<string[]>([])
-  const [cart, setCart] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [store, setStore] = useState<StoreDetailsType | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [cart, setCart] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
+
+  const fetchStoreOwners = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/store-owner');
+      console.log(response.data);
+      setStoreOwners(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
+    }
+  };
 
   useEffect(() => {
-    // In a real app, this would be an API call
-    const foundStore = dummyStores.find((s) => s.id === storeId)
+    if (!storeId || storeOwnersFromDB.length === 0) return;
+
+    const foundStore = storeOwnersFromDB.find(
+      (s) => String(s.storeOwner_id) === storeId,
+    );
+
     if (foundStore) {
-      setStore(foundStore)
+      setStore(foundStore);
     }
-    setLoading(false)
-  }, [storeId])
+
+    setLoading(false);
+  }, [storeId, storeOwnersFromDB]);
+
+  useEffect(() => {
+    fetchStoreOwners();
+  }, []);
 
   const toggleFavorite = (storeId: string) => {
     if (favorites.includes(storeId)) {
-      setFavorites(favorites.filter((id) => id !== storeId))
+      setFavorites(favorites.filter((id) => id !== storeId));
       toast({
-        title: "Removed from favorites",
-        description: "This store has been removed from your favorites.",
-      })
+        title: 'Removed from favorites',
+        description: 'This store has been removed from your favorites.',
+      });
     } else {
-      setFavorites([...favorites, storeId])
+      setFavorites([...favorites, storeId]);
       toast({
-        title: "Added to favorites",
-        description: "This store has been added to your favorites.",
-      })
+        title: 'Added to favorites',
+        description: 'This store has been added to your favorites.',
+      });
     }
-  }
+  };
 
   const addToCart = (item: any) => {
-    const existingItem = cart.find((cartItem) => cartItem.id === item.id)
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
 
     if (existingItem) {
       setCart(
-        cart.map((cartItem) => (cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem)),
-      )
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem,
+        ),
+      );
     } else {
-      setCart([...cart, { ...item, quantity: 1 }])
+      setCart([...cart, { ...item, quantity: 1 }]);
     }
 
     toast({
-      title: "Added to cart",
+      title: 'Added to cart',
       description: `${item.name} has been added to your cart.`,
       action: (
         <ToastAction altText="View Cart" asChild>
           <a href="/customer/cart">View Cart</a>
         </ToastAction>
       ),
-    })
-  }
+    });
+  };
 
   const updateQuantity = (itemId: string, change: number) => {
-    const existingItem = cart.find((item) => item.id === itemId)
+    const existingItem = cart.find((item) => item.id === itemId);
 
-    if (!existingItem) return
+    if (!existingItem) return;
 
-    const newQuantity = existingItem.quantity + change
+    const newQuantity = existingItem.quantity + change;
 
     if (newQuantity <= 0) {
-      setCart(cart.filter((item) => item.id !== itemId))
+      setCart(cart.filter((item) => item.id !== itemId));
       toast({
-        title: "Removed from cart",
+        title: 'Removed from cart',
         description: `${existingItem.name} has been removed from your cart.`,
-      })
+      });
     } else {
-      setCart(cart.map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item)))
+      setCart(
+        cart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item,
+        ),
+      );
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -90,7 +130,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!store) {
@@ -109,7 +149,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -119,28 +159,56 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
         <div className="container p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">{store.name}</h1>
+              <h1 className="text-3xl font-bold">{store.storeName}</h1>
               <p className="text-muted-foreground">{store.location}</p>
             </div>
             <Button
-              variant={favorites.includes(store.id) ? "default" : "outline"}
+              variant={
+                favorites.includes(String(store.storeOwner_id))
+                  ? 'default'
+                  : 'outline'
+              }
               size="icon"
-              onClick={() => toggleFavorite(store.id)}
+              onClick={() => toggleFavorite(String(store.storeOwner_id))}
             >
-              <Heart className={`h-5 w-5 ${favorites.includes(store.id) ? "fill-white" : ""}`} />
+              <Heart
+                className={`h-5 w-5 ${
+                  favorites.includes(String(store.storeOwner_id))
+                    ? 'fill-white'
+                    : ''
+                }`}
+              />
               <span className="sr-only">Add to favorites</span>
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
-              <div className="bg-gray-200 h-64 rounded-lg flex items-center justify-center mb-4">
-                <p className="text-gray-500">Store Image Gallery (Placeholder)</p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-gray-300 h-16 w-16 flex-shrink-0 rounded"></div>
-                ))}
+              <div className="space-y-4">
+                <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                  <img
+                    src={`http://localhost:8800/api/${store.media[selectedImage]?.path}`}
+                    alt={store.media[selectedImage]?.pathName}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {store.media.map((image, index) => (
+                    <button
+                      key={image.media_id}
+                      onClick={() => setSelectedImage(index)}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden ${
+                        selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                    >
+                      <img
+                        src={`http://localhost:8800/api/${image.path}`}
+                        alt={image.pathName}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -154,17 +222,23 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                     <Clock className="h-4 w-4" />
                     <span>{store.openingHours}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  {/* <div className="flex items-center gap-1">
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${i < store.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                          className={`h-4 w-4 ${
+                            i < store.rating
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }`}
                         />
                       ))}
-                    <span className="text-sm ml-1">({store.reviewCount} reviews)</span>
-                  </div>
+                    <span className="text-sm ml-1">
+                      ({store.reviewCount} reviews)
+                    </span>
+                  </div> */}
                   <div>
                     <h3 className="font-medium mb-2">Description</h3>
                     <p className="text-sm">{store.description}</p>
@@ -172,11 +246,13 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                   <div>
                     <h3 className="font-medium mb-2">Current Promotions</h3>
                     <div className="flex flex-wrap gap-2">
-                      {store.promotions.map((promo: string, index: number) => (
-                        <Badge key={index} variant="secondary">
-                          {promo}
-                        </Badge>
-                      ))}
+                      {store.promotions.map(
+                        (promo: Promotion, index: number) => (
+                          <Badge key={index} variant="secondary">
+                            {promo.discount} off {promo.title}
+                          </Badge>
+                        ),
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -186,21 +262,25 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
 
           <Tabs defaultValue="menu">
             <TabsList>
-              <TabsTrigger value="menu">Menu</TabsTrigger>
+              <TabsTrigger value="menu">Products</TabsTrigger>
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
               <TabsTrigger value="info">Additional Info</TabsTrigger>
             </TabsList>
 
             <TabsContent value="menu" className="pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {dummyMenuItems.map((item) => {
-                  const cartItem = cart.find((i) => i.id === item.id)
+                {store.products.map((item) => {
+                  const cartItem = cart.find((i) => i.id === item.product_id);
 
                   return (
-                    <Card key={item.id}>
+                    <Card key={item.product_id}>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <CardDescription>${item.price.toFixed(2)}</CardDescription>
+                        <CardTitle className="text-lg">
+                          {item.product_name}
+                        </CardTitle>
+                        <CardDescription>
+                          ${item.price.toFixed(2)}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-2">
                         <p className="text-sm">{item.description}</p>
@@ -208,23 +288,41 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                       <CardFooter>
                         {cartItem ? (
                           <div className="flex items-center justify-between w-full">
-                            <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, -1)}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() =>
+                                updateQuantity(String(item.product_id), -1)
+                              }
+                            >
                               <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="font-medium">{cartItem.quantity}</span>
-                            <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, 1)}>
+                            <span className="font-medium">
+                              {cartItem.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() =>
+                                updateQuantity(String(item.product_id), 1)
+                              }
+                            >
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                         ) : (
-                          <Button variant="default" className="w-full" onClick={() => addToCart(item)}>
+                          <Button
+                            variant="default"
+                            className="w-full"
+                            onClick={() => addToCart(item)}
+                          >
                             <ShoppingCart className="h-4 w-4 mr-2" />
                             Add to Cart
                           </Button>
                         )}
                       </CardFooter>
                     </Card>
-                  )
+                  );
                 })}
               </div>
 
@@ -232,11 +330,17 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                 <div className="mt-6 p-4 bg-muted rounded-lg">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">Your Cart</h3>
-                    <Badge variant="secondary">{cart.reduce((total, item) => total + item.quantity, 0)} items</Badge>
+                    <Badge variant="secondary">
+                      {cart.reduce((total, item) => total + item.quantity, 0)}{' '}
+                      items
+                    </Badge>
                   </div>
                   <div className="space-y-2">
                     {cart.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center">
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center"
+                      >
                         <span>
                           {item.quantity}x {item.name}
                         </span>
@@ -245,7 +349,15 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                     ))}
                     <div className="border-t pt-2 mt-2 flex justify-between font-medium">
                       <span>Total</span>
-                      <span>${cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</span>
+                      <span>
+                        $
+                        {cart
+                          .reduce(
+                            (total, item) => total + item.price * item.quantity,
+                            0,
+                          )
+                          .toFixed(2)}
+                      </span>
                     </div>
                   </div>
                   <Button className="w-full mt-4" asChild>
@@ -261,7 +373,9 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                   <Card key={i}>
                     <CardHeader>
                       <div className="flex justify-between">
-                        <CardTitle className="text-base">Customer Name</CardTitle>
+                        <CardTitle className="text-base">
+                          Customer Name
+                        </CardTitle>
                         <div className="flex">
                           {Array(5)
                             .fill(0)
@@ -269,7 +383,11 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                               <Star
                                 key={j}
                                 className={`h
-                                className={\`h-4 w-4 ${j < 4 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                className={\`h-4 w-4 ${
+                                  j < 4
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
                               />
                             ))}
                         </div>
@@ -278,7 +396,8 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm">
-                        Great store with excellent service and products. Would definitely recommend to others!
+                        Great store with excellent service and products. Would
+                        definitely recommend to others!
                       </p>
                     </CardContent>
                   </Card>
@@ -292,19 +411,28 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                   <div className="space-y-4">
                     <div>
                       <h3 className="font-medium mb-2">Contact Information</h3>
-                      <p className="text-sm">Phone: (555) 123-4567</p>
-                      <p className="text-sm">Email: contact@{store.name.toLowerCase().replace(/\s/g, "")}.com</p>
+                      <p className="text-sm">Phone: {store.phone}</p>
+                      <p className="text-sm">
+                        Email:
+                        {store.email.toLowerCase().replace(/\s/g, '')}.com
+                      </p>
                     </div>
 
                     <div>
                       <h3 className="font-medium mb-2">Delivery Information</h3>
-                      <p className="text-sm">Delivery available within 5 miles radius</p>
-                      <p className="text-sm">Estimated delivery time: 30-45 minutes</p>
+                      <p className="text-sm">
+                        Delivery available within 5 miles radius
+                      </p>
+                      <p className="text-sm">
+                        Estimated delivery time: 30-45 minutes
+                      </p>
                     </div>
 
                     <div>
                       <h3 className="font-medium mb-2">Payment Methods</h3>
-                      <p className="text-sm">Credit/Debit Cards, Cash on Delivery, Mobile Payments</p>
+                      <p className="text-sm">
+                        Credit/Debit Cards, Cash on Delivery, Mobile Payments
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -314,6 +442,5 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,16 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  MapPin,
-  Upload,
-  Plus,
-  Edit,
-  Trash2,
-  Clock,
-  Star,
-  Save,
-} from 'lucide-react';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -18,17 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -37,12 +17,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dummyStores } from '@/lib/dummy-data';
-import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
-import InteractiveMap from '@/components/map/interactive-map';
+import { Textarea } from '@/components/ui/textarea';
+import { stallsGround, stallsSecond } from '@/lib/data';
+import DEFDEFSEC from '@/lib/DEFDEFSEC';
+import PathContainer from '@/lib/PathContainer';
+import PathLines from '@/lib/PathLines';
+import PathLines2nd from '@/lib/PathLines2nd';
 import axios from 'axios';
+import {
+  Clock,
+  Edit,
+  MapPin,
+  Minus,
+  PanelRightClose,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  TransformComponent,
+  TransformWrapper,
+  useControls,
+} from 'react-zoom-pan-pinch';
+import { toast } from 'sonner';
+import { StoreDetailsType } from '../admin/admin-dashboard';
+import { Badge } from '../ui/badge';
 
 type StoreType = {
   created_at: string;
@@ -69,27 +80,82 @@ type ImageTypeGallery = {
   storeOwner_id: string;
 };
 
+const Controls = ({
+  showSecondFloor,
+  setShowSecondFloor,
+}: {
+  showSecondFloor: boolean;
+  setShowSecondFloor: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const { zoomIn, zoomOut } = useControls();
+  return (
+    <div className="absolute top-4 right-4 flex flex-col gap-2">
+      <Button
+        variant="secondary"
+        size="icon"
+        onClick={() => zoomIn()}
+        className="bg-white/90 hover:bg-white shadow-md text-black"
+      >
+        <Plus className="h-4 w-4" color="black" />
+        <span className="sr-only">Zoom in</span>
+      </Button>
+      <Button
+        variant="secondary"
+        size="icon"
+        onClick={() => zoomOut()}
+        className="bg-white/90 hover:bg-white shadow-md text-black"
+      >
+        <Minus className="h-4 w-4 " color="black" />
+        <span className="sr-only">Zoom out</span>
+      </Button>
+
+      <Button
+        variant="secondary"
+        size="icon"
+        onClick={() => setShowSecondFloor(!showSecondFloor)}
+        className="bg-white/90 hover:bg-white shadow-md text-black"
+      >
+        <PanelRightClose className="h-4 w-4 " color="black" />
+        <span className="sr-only">Proceed 2nd Floor</span>
+      </Button>
+    </div>
+  );
+};
+
 export default function StoreManagement() {
-  // For demo purposes, we'll assume the store owner owns the first store
-  const [store, setStore] = useState<StoreType | null>(null);
+  const [storeDetails, setStoreDetails] = useState<StoreDetailsType | null>();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPromoDialog, setShowPromoDialog] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // store forms
-  const [storeName, setStoreName] = useState(store?.storeName || '');
+  const [storeName, setStoreName] = useState(storeDetails?.storeName || '');
   const [storeCategory, setStoreCategory] = useState(
-    store?.storeCategory || '',
+    storeDetails?.storeCategory || '',
   );
-  const [description, setDescription] = useState(store?.description || '');
-  const [openingHours, setOpeningHours] = useState(store?.openingHours || '');
-  const [phone, setPhone] = useState(store?.phone || '');
-  const [email, setEmail] = useState(store?.email || '');
+  const [description, setDescription] = useState(
+    storeDetails?.description || '',
+  );
+  const [openingHours, setOpeningHours] = useState(
+    storeDetails?.openingHours || '',
+  );
+  const [phone, setPhone] = useState(storeDetails?.phone || '');
+  const [email, setEmail] = useState(storeDetails?.email || '');
 
   // Image upload states
   const [images, setImages] = useState<ImageTypeGallery[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
+
+  // promotions
+  const [title, setTitle] = useState('');
+  const [descriptionPromotions, setDescriptionPromotions] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [discountType, setDiscountType] = useState('percent');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -98,14 +164,61 @@ export default function StoreManagement() {
       );
       if (storeOwnerDefaultDetails) {
         const parsed = JSON.parse(storeOwnerDefaultDetails);
-        setStore(parsed as StoreType);
+        setStoreDetails(parsed as StoreDetailsType);
       }
     }
   }, []);
 
   useEffect(() => {
-    console.log('details', store);
-  }, [store]);
+    console.log('details', storeDetails);
+  }, [storeDetails]);
+
+  const [viewStallDetails, setViewStallDetails] = useState(
+    {} as StoreDetailsType,
+  );
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [showSecondFloor, setShowSecondFloor] = useState(false);
+
+  const [selectedStalls, setSelectedStalls] = useState('');
+  const [showModal, setShowModal] = useState(false);
+
+  const [stallDetails, setStallDetails] = useState({
+    stall_no: '',
+    floor: '',
+    size: '',
+  });
+
+  const hoveredStallId = storeDetails?.stall_no;
+
+  const fetchStoreOwners = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/store-owner');
+      console.log(response.data);
+      setStoreOwners(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
+    }
+  };
+
+  useEffect(() => {
+    Promise.all([fetchStoreOwners()]);
+  }, []);
+
+  const storeDetailsFromDBWithPromotionsProductsMedia = storeOwnersFromDB.find(
+    (store) => store.storeOwner_id === storeDetails?.storeOwner_id,
+  );
+
+  const updatedStallsGround = stallsGround.map((stall) => ({
+    ...stall,
+    floor: '1',
+    size: `${Math.floor(Math.random() * (1350 - 1150 + 1)) + 1150} sq`,
+  }));
+
+  const updatedStalSecondFllot = stallsSecond.map((stall) => ({
+    ...stall,
+    floor: '1',
+    size: `${Math.floor(Math.random() * (1350 - 1150 + 1)) + 1150} sq`,
+  }));
 
   const fetchMediaGallery = async () => {
     try {
@@ -124,71 +237,22 @@ export default function StoreManagement() {
   }, []);
 
   useEffect(() => {
-    if (store) {
-      setStoreName(store.storeName || '');
-      setStoreCategory(store.storeCategory || '');
-      setDescription(store.description || '');
-      setOpeningHours(store.openingHours || '');
-      setPhone(store.phone || '');
-      setEmail(store.email || '');
+    if (storeDetails) {
+      setStoreName(storeDetails.storeName || '');
+      setStoreCategory(storeDetails.storeCategory || '');
+      setDescription(storeDetails.description || '');
+      setOpeningHours(storeDetails.openingHours || '');
+      setPhone(storeDetails.phone || '');
+      setEmail(storeDetails.email || '');
     }
-  }, [store]);
-
-  // Create map markers from all stores
-  const storeMarkers = dummyStores.map((s, index) => {
-    // Assign stores to different floors and positions
-    const floor = index % 2 === 0 ? 1 : 2;
-
-    // Calculate positions based on index
-    let x, y;
-    if (floor === 1) {
-      // Position stores on first floor
-      if (index % 4 === 0) {
-        x = 17.5; // Store A
-        y = 20;
-      } else if (index % 4 === 2) {
-        x = 17.5; // Store B
-        y = 55;
-      } else if (index % 4 === 1) {
-        x = 72.5; // Store C
-        y = 20;
-      } else {
-        x = 72.5; // Store D
-        y = 55;
-      }
-    } else {
-      // Position stores on second floor
-      if (index % 3 === 0) {
-        x = 17.5; // Store E
-        y = 25;
-      } else if (index % 3 === 1) {
-        x = 17.5; // Store F
-        y = 70;
-      } else {
-        x = 65; // Food Court
-        y = 47.5;
-      }
-    }
-
-    // Highlight the current store owner's store
-    const isCurrentStore = s.id === store?.id;
-
-    return {
-      id: s.id,
-      x,
-      y,
-      label: s.name,
-      floor,
-      color: isCurrentStore ? 'bg-green-500' : 'bg-primary',
-    };
-  });
+  }, [storeDetails]);
 
   const handleSaveStore = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:8800/api/store-owner/${store?.storeOwner_id}`,
+        `http://localhost:8800/api/store-owner/${storeDetails?.storeOwner_id}`,
         {
-          ownerName: store?.ownerName,
+          ownerName: storeDetails?.ownerName,
           storeName,
           storeCategory,
           description,
@@ -206,7 +270,7 @@ export default function StoreManagement() {
       localStorage.setItem(
         'store_owner_details',
         JSON.stringify({
-          ...store,
+          ...storeDetails,
           storeName,
           storeCategory,
           description,
@@ -217,7 +281,7 @@ export default function StoreManagement() {
       );
 
       // ✅ Also update your React state
-      setStore((prev) =>
+      setStoreDetails((prev) =>
         prev
           ? {
               ...prev,
@@ -249,7 +313,10 @@ export default function StoreManagement() {
       // Include the additional fields required by the backend
       formData.append('media_image', file);
       formData.append('mediaName', 'oh yeah');
-      formData.append('storeOwner_id', store?.storeOwner_id || '');
+      formData.append(
+        'storeOwner_id',
+        String(storeDetails?.storeOwner_id) || '',
+      );
 
       // Set image preview
       setImagePreview(URL.createObjectURL(file));
@@ -296,19 +363,62 @@ export default function StoreManagement() {
     }
   };
 
-  const handleAddPromotion = () => {
-    // In a real app, this would add a promotion to the database
+  const handleAddPromotion = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     setShowPromoDialog(false);
 
-    // Show success message
-    setShowSuccessMessage(true);
+    try {
+      const res = await axios.post(
+        'http://localhost:8800/api/promotions/create',
+        {
+          title,
+          startDate,
+          endDate,
+          discountType,
+          discount,
+          description: descriptionPromotions,
+          storeOwner_id: storeDetails?.storeOwner_id,
+          status: 'active',
+        },
+      );
 
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setShowSuccessMessage(false);
-    }, 3000);
+      console.log(res.data);
+
+      toast('Store owner added successfully!');
+
+      // Show success message
+      setShowSuccessMessage(true);
+
+      // clear fields
+      setTitle('');
+      setStartDate('');
+      setEndDate('');
+      setDiscount('');
+      setDescriptionPromotions('');
+      setDiscountType('percent');
+      setShowPromoDialog(false);
+
+      fetchStoreOwners();
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to add store owner');
+    }
   };
 
+  const handleDeletePromotions = async (ID: string) => {
+    try {
+      await axios.delete(`http://localhost:8800/api/promotions/${ID}`);
+
+      fetchStoreOwners();
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  };
   return (
     <div className="flex h-screen">
       <StoreOwnerSidebar />
@@ -351,18 +461,23 @@ export default function StoreManagement() {
             <TabsContent value="details" className="pt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>{store?.storeName}</CardTitle>
+                  <CardTitle>
+                    {storeDetailsFromDBWithPromotionsProductsMedia?.storeName}
+                  </CardTitle>
                   <CardDescription className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {store?.location}
+                    {storeDetailsFromDBWithPromotionsProductsMedia?.location}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <h3 className="font-medium mb-2">Description</h3>
                     <p className="font-semithin italic">
-                      {(store?.description ?? '').length > 0
-                        ? store?.description
+                      {(
+                        storeDetailsFromDBWithPromotionsProductsMedia?.description ??
+                        ''
+                      ).length > 0
+                        ? storeDetailsFromDBWithPromotionsProductsMedia?.description
                         : 'Empty store description'}
                     </p>
                   </div>
@@ -371,8 +486,9 @@ export default function StoreManagement() {
                     <h3 className="font-medium mb-2">Opening Hours</h3>
                     <p className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {store?.openingHours?.length ?? 0 > 0
-                        ? store?.openingHours
+                      {storeDetailsFromDBWithPromotionsProductsMedia
+                        ?.openingHours?.length ?? 0 > 0
+                        ? storeDetailsFromDBWithPromotionsProductsMedia?.openingHours
                         : 'Not specified'}
                     </p>
                   </div>
@@ -389,16 +505,31 @@ export default function StoreManagement() {
                         Add Promotion
                       </Button>
                     </div>
-                    {/* <div className="flex flex-wrap gap-2">
-                      {store.promotions.map((promo, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {promo}
-                          <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div> */}
+                    <div className="flex flex-wrap gap-2">
+                      {storeDetailsFromDBWithPromotionsProductsMedia?.promotions.map(
+                        (promo, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {promo.discount}% off - {promo.title}
+                            <Button
+                              onClick={() =>
+                                handleDeletePromotions(
+                                  String(promo.promotion_id),
+                                )
+                              }
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 ml-1 p-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </Badge>
+                        ),
+                      )}
+                    </div>
                   </div>
 
                   {/* <div>
@@ -421,7 +552,7 @@ export default function StoreManagement() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="location" className="pt-4">
+            <TabsContent value="location" className="pt-4 relative">
               <Card>
                 <CardHeader>
                   <CardTitle>Store Location</CardTitle>
@@ -429,12 +560,165 @@ export default function StoreManagement() {
                     View your store location in the mall map
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent>
-                  <InteractiveMap
-                    markers={storeMarkers}
-                    onMarkerClick={() => {}}
-                  />
-                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <div className="h-screen flex items-center justify-center gap-8 relative">
+                    <div className="mb-[2rem] absolute left-5 top-[1rem] text-2xl font-bold">
+                      {showSecondFloor ? (
+                        <h1>Second Floor</h1>
+                      ) : (
+                        <h1>Ground Floor</h1>
+                      )}
+                    </div>
+                    <div className="relative w-full h-[700px] grid place-content-center place-items-center overflow-hidden bg-transparent">
+                      {showSecondFloor ? (
+                        <TransformWrapper
+                          initialScale={5}
+                          minScale={0.5}
+                          maxScale={4}
+                        >
+                          <TransformComponent
+                            wrapperClass="w-fit h-fit"
+                            contentClass="w-fit h-fit"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlnsXlink="http://www.w3.org/1999/xlink"
+                              width="1080"
+                              zoomAndPan="magnify"
+                              viewBox="0 0 810 809.999993"
+                              height="1080"
+                              preserveAspectRatio="xMidYMid meet"
+                              version="1.0"
+                            >
+                              <DEFDEFSEC />
+                              {updatedStalSecondFllot.map((stall, index) => {
+                                let fillColor = '#eab308'; // Default to black (occupied)
+
+                                const stallData = storeOwnersFromDB.find(
+                                  (s) =>
+                                    String(s.stall_no) === String(stall.id),
+                                );
+
+                                if (stallData) {
+                                  fillColor = '#222831'; // Stall is occupied
+                                }
+
+                                // If hovered, override the color
+                                if (hoveredStallId === String(stall.id)) {
+                                  fillColor = '#FE7743'; // Hover color
+                                }
+
+                                return (
+                                  <PathContainer
+                                    key={index}
+                                    onClick={() => {
+                                      console.log(stall.id);
+                                      setStallDetails({
+                                        stall_no: stall.id,
+                                        floor: stall.floor,
+                                        size: stall.size,
+                                      });
+                                      setSelectedStalls(stall.id);
+                                      if (stallData) {
+                                        setShowModal(true);
+                                        setViewStallDetails(stallData);
+                                      } else {
+                                        // setShowAddOwnerDialog(true);
+                                      }
+                                    }}
+                                    id={stall.id}
+                                    d={stall.d}
+                                    fillColor={fillColor} // Pass the fillColor as a prop
+                                  />
+                                );
+                              })}
+
+                              <PathLines2nd />
+                            </svg>
+                          </TransformComponent>
+                          <Controls
+                            showSecondFloor={showSecondFloor}
+                            setShowSecondFloor={setShowSecondFloor}
+                          />
+                        </TransformWrapper>
+                      ) : (
+                        <TransformWrapper
+                          initialScale={1}
+                          minScale={0.5}
+                          maxScale={4}
+                        >
+                          <TransformComponent
+                            wrapperClass="w-fit h-fit"
+                            contentClass="w-fit h-fit"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlnsXlink="http://www.w3.org/1999/xlink"
+                              width="1080"
+                              zoomAndPan="magnify"
+                              viewBox="0 0 810 809.999993"
+                              height="1080"
+                              preserveAspectRatio="xMidYMid meet"
+                              version="1.0"
+                            >
+                              <DEFDEFSEC />
+
+                              {updatedStallsGround.map((stall, index) => {
+                                let fillColor = '#eab308'; // Default to black (occupied)
+
+                                const stallData = storeOwnersFromDB.find(
+                                  (s) =>
+                                    String(s.stall_no) === String(stall.id),
+                                );
+
+                                if (stallData) {
+                                  fillColor = '#222831'; // Stall is occupied
+                                }
+
+                                // If hovered, override the color
+                                if (hoveredStallId === String(stall.id)) {
+                                  fillColor = '#FE7743'; // Hover color
+                                }
+
+                                return (
+                                  <PathContainer
+                                    key={index}
+                                    onClick={() => {
+                                      console.log(stall.id);
+                                      setStallDetails({
+                                        stall_no: stall.id,
+                                        floor: stall.floor,
+                                        size: stall.size,
+                                      });
+                                      setSelectedStalls(stall.id);
+                                      if (stallData) {
+                                        setShowModal(true);
+                                        setViewStallDetails(stallData);
+                                      } else {
+                                        // setShowAddOwnerDialog(true);
+                                      }
+                                    }}
+                                    id={stall.id}
+                                    d={stall.d}
+                                    fillColor={fillColor} // Pass the fillColor as a prop
+                                  />
+                                );
+                              })}
+
+                              <PathLines />
+                            </svg>
+                          </TransformComponent>
+                          <Controls
+                            showSecondFloor={showSecondFloor}
+                            setShowSecondFloor={setShowSecondFloor}
+                          />
+                        </TransformWrapper>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-4 bg-muted rounded-lg absolute top-3 right-5">
                     <h3 className="font-medium mb-2">Map Legend</h3>
                     <div className="flex flex-wrap gap-4">
                       <div className="flex items-center gap-2">
@@ -442,13 +726,13 @@ export default function StoreManagement() {
                         <span>Other Stores</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                        <div className="w-4 h-4 rounded-full bg-[#FE7743]"></div>
                         <span>Your Store</span>
                       </div>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">
                       <span className="font-medium">Your store location:</span>{' '}
-                      {store?.location}, Floor {store?.floor}
+                      {storeDetails?.location}, Floor {storeDetails?.floor}
                     </p>
                   </div>
                 </CardContent>
@@ -472,7 +756,9 @@ export default function StoreManagement() {
                     ) : (
                       images
                         .filter(
-                          (img) => img.storeOwner_id === store?.storeOwner_id,
+                          (img) =>
+                            String(img.storeOwner_id) ===
+                            String(storeDetails?.storeOwner_id),
                         )
                         .map((image, index) => (
                           <div key={index} className="relative group">
@@ -634,54 +920,84 @@ export default function StoreManagement() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="promo-name">Promotion Name</Label>
-              <Input id="promo-name" placeholder="Summer Sale" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="promo-desc">Description</Label>
-              <Textarea
-                id="promo-desc"
-                placeholder="Get 20% off on all items"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleAddPromotion}>
+            <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="start-date">Start Date</Label>
-                <Input id="start-date" type="date" />
+                <Label htmlFor="promo-name">Promotion Name</Label>
+                <Input
+                  id="promo-name"
+                  placeholder="Summer Sale"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="end-date">End Date</Label>
-                <Input id="end-date" type="date" />
+                <Label htmlFor="promo-desc">Description</Label>
+                <Textarea
+                  id="promo-desc"
+                  placeholder="Get 20% off on all items"
+                  value={descriptionPromotions}
+                  onChange={(e) => setDescriptionPromotions(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="discount">Discount</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="discount"
+                    placeholder="20"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                  />
+                  <Select
+                    value={discountType}
+                    onValueChange={(val) => setDiscountType(val)}
+                  >
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percent">Percent (%)</SelectItem>
+                      <SelectItem value="fixed">Fixed ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="discount">Discount</Label>
-              <div className="flex gap-2">
-                <Input id="discount" placeholder="20" />
-                <Select defaultValue="percent">
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percent">Percent (%)</SelectItem>
-                    <SelectItem value="fixed">Fixed ($)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPromoDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddPromotion}>Add Promotion</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowPromoDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Add Promotion</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -3,7 +3,6 @@
 import type React from 'react';
 
 import CustomerSidebar from '@/components/customer/customer-sidebar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,18 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { stallsGround, stallsSecond } from '@/lib/data';
 import DEFDEFSEC from '@/lib/DEFDEFSEC';
-import { dummyStores } from '@/lib/dummy-data';
 import PathContainer from '@/lib/PathContainer';
 import PathLines from '@/lib/PathLines';
 import PathLines2nd from '@/lib/PathLines2nd';
@@ -32,12 +23,10 @@ import axios from 'axios';
 import {
   Clock,
   Heart,
-  MapPin,
   Minus,
   PanelRightClose,
   Plus,
   Search,
-  Star,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -46,7 +35,7 @@ import {
   TransformWrapper,
   useControls,
 } from 'react-zoom-pan-pinch';
-import { StoreDetails } from '../admin/admin-dashboard';
+import { StoreDetailsType } from '../admin/admin-dashboard';
 
 const Controls = ({
   showSecondFloor,
@@ -93,9 +82,8 @@ const Controls = ({
 export default function StoreMap() {
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [selectedMapStore, setSelectedMapStore] = useState<any>(null);
-  const [showStoreDialog, setShowStoreDialog] = useState(false);
-  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetails[]>([]);
+
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
 
   const [showSecondFloor, setShowSecondFloor] = useState(false);
   const [selectedStalls, setSelectedStalls] = useState('');
@@ -134,9 +122,9 @@ export default function StoreMap() {
     }
   };
 
-  const [stalls, setStalls] = useState<any[]>([]);
-
-  const [viewStallDetails, setViewStallDetails] = useState({} as StoreDetails);
+  const [viewStallDetails, setViewStallDetails] = useState(
+    {} as StoreDetailsType,
+  );
   const [selectedImage, setSelectedImage] = useState(0);
 
   const fetchStoreOwners = async () => {
@@ -166,6 +154,7 @@ export default function StoreMap() {
   }));
 
   const hasImages = viewStallDetails.media && viewStallDetails.media.length > 0;
+
   const visibleStores = filteredStores.filter(
     (store) => store.floor === (showSecondFloor ? 2 : 1),
   );
