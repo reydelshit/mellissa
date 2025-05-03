@@ -268,103 +268,111 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
             </TabsList>
 
             <TabsContent value="menu" className="pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {store.products.map((item) => {
-                  const cartItem = cart.find((i) => i.id === item.product_id);
-
-                  return (
-                    <Card key={item.product_id}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">
-                          {item.product_name}
-                        </CardTitle>
-                        <CardDescription>
-                          ${item.price.toFixed(2)}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        <p className="text-sm">{item.description}</p>
-                      </CardContent>
-                      <CardFooter>
-                        {cartItem ? (
-                          <div className="flex items-center justify-between w-full">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() =>
-                                updateQuantity(String(item.product_id), -1)
-                              }
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="font-medium">
-                              {cartItem.quantity}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() =>
-                                updateQuantity(String(item.product_id), 1)
-                              }
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="default"
-                            className="w-full"
-                            onClick={() => addToCart(item)}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Add to Cart
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              {cart.length > 0 && (
-                <div className="mt-6 p-4 bg-muted rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium">Your Cart</h3>
-                    <Badge variant="secondary">
-                      {cart.reduce((total, item) => total + item.quantity, 0)}{' '}
-                      items
-                    </Badge>
+              <div className="min-h-screen bg-gradient-to-b  py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                  <div className="text-center mb-12">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                      Our Products
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                      Discover our curated collection of premium products
+                      designed to enhance your lifestyle.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    {cart.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between items-center"
-                      >
-                        <span>
-                          {item.quantity}x {item.name}
-                        </span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                    <div className="border-t pt-2 mt-2 flex justify-between font-medium">
-                      <span>Total</span>
-                      <span>
-                        $
-                        {cart
-                          .reduce(
-                            (total, item) => total + item.price * item.quantity,
-                            0,
-                          )
-                          .toFixed(2)}
-                      </span>
-                    </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {store.products.map((item) => {
+                      const cartItem = cart.find(
+                        (i) => i.id === item.product_id,
+                      );
+
+                      return (
+                        <div
+                          key={item.product_id}
+                          className="group relative transition-all duration-300 hover:-translate-y-1"
+                        >
+                          <Card className="h-full overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div className="h-48 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 flex items-center justify-center">
+                              <img
+                                src={`http://localhost:8800/api/${item.product_image}`}
+                                alt={`Image ${item.product_id}`}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+
+                            <CardHeader className="pb-2 pt-4">
+                              <div className="flex justify-between items-start">
+                                <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white line-clamp-2">
+                                  {item.product_name}
+                                </CardTitle>
+                                <CardDescription className="text-lg font-medium text-primary">
+                                  ${item.price.toFixed(2)}
+                                </CardDescription>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className="pb-2">
+                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                {item.description}
+                              </p>
+                            </CardContent>
+
+                            <CardFooter className="pt-2 pb-4">
+                              {cartItem ? (
+                                <div className="flex items-center justify-between w-full">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-9 w-9 rounded-full border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                    onClick={() =>
+                                      updateQuantity(
+                                        String(item.product_id),
+                                        -1,
+                                      )
+                                    }
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+
+                                  <span className="font-medium text-gray-900 dark:text-white text-lg">
+                                    {cartItem.quantity}
+                                  </span>
+
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-9 w-9 rounded-full border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                    onClick={() =>
+                                      updateQuantity(String(item.product_id), 1)
+                                    }
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="default"
+                                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2 transition-all duration-200 shadow-sm hover:shadow group-hover:scale-[1.02]"
+                                  onClick={() => addToCart(item)}
+                                >
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  Add to Cart
+                                </Button>
+                              )}
+                            </CardFooter>
+                          </Card>
+
+                          {item.created_at && (
+                            <div className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                              NEW
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <Button className="w-full mt-4" asChild>
-                    <a href="/customer/cart">View Cart</a>
-                  </Button>
                 </div>
-              )}
+              </div>
             </TabsContent>
 
             <TabsContent value="reviews" className="pt-4">
