@@ -2,18 +2,9 @@
 
 import type React from 'react';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import {
-  Search,
-  MapPin,
-  Heart,
-  Star,
-  Clock,
-  Plus,
-  PanelRightClose,
-  Minus,
-} from 'lucide-react';
+import CustomerSidebar from '@/components/customer/customer-sidebar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -22,9 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -32,20 +20,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { dummyStores } from '@/lib/dummy-data';
-import CustomerSidebar from '@/components/customer/customer-sidebar';
-import InteractiveMap from '@/components/map/interactive-map';
+import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { stallsGround, stallsSecond } from '@/lib/data';
+import DEFDEFSEC from '@/lib/DEFDEFSEC';
+import { dummyStores } from '@/lib/dummy-data';
+import PathContainer from '@/lib/PathContainer';
+import PathLines from '@/lib/PathLines';
+import PathLines2nd from '@/lib/PathLines2nd';
+import axios from 'axios';
+import {
+  Clock,
+  Heart,
+  MapPin,
+  Minus,
+  PanelRightClose,
+  Plus,
+  Search,
+  Star,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   TransformComponent,
   TransformWrapper,
   useControls,
 } from 'react-zoom-pan-pinch';
-import PathContainer from '@/lib/PathContainer';
-import DEFDEFSEC from '@/lib/DEFDEFSEC';
-import PathLines2nd from '@/lib/PathLines2nd';
-import { stallsGround, stallsSecond } from '@/lib/data';
-import PathLines from '@/lib/PathLines';
+import { StoreDetails } from '../admin/admin-dashboard';
 
 const Controls = ({
   showSecondFloor,
@@ -94,16 +95,21 @@ export default function StoreMap() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedMapStore, setSelectedMapStore] = useState<any>(null);
   const [showStoreDialog, setShowStoreDialog] = useState(false);
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetails[]>([]);
 
   const [showSecondFloor, setShowSecondFloor] = useState(false);
   const [selectedStalls, setSelectedStalls] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const [stalls, setStalls] = useState<any[]>([]);
+  const [stallDetails, setStallDetails] = useState({
+    stall_no: '',
+    floor: '',
+    size: '',
+  });
 
-  const filteredStores = dummyStores.filter(
+  const filteredStores = storeOwnersFromDB.filter(
     (store) =>
-      store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      store.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       store.location.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -126,82 +132,41 @@ export default function StoreMap() {
     }
   };
 
-  const handleMapMarkerClick = (storeId: string) => {
-    const store = dummyStores.find((s) => s.id === storeId);
-    if (store) {
-      setSelectedMapStore(store);
-      setShowStoreDialog(true);
+  const [stalls, setStalls] = useState<any[]>([]);
+
+  const [viewStallDetails, setViewStallDetails] = useState({} as StoreDetails);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const fetchStoreOwners = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/store-owner');
+      console.log(response.data);
+      setStoreOwners(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
     }
   };
 
-  // Create map markers from stores
-  const mapMarkers = dummyStores.map((store, index) => {
-    // Assign stores to different floors and positions
-    const floor = index % 2 === 0 ? 1 : 2;
+  useEffect(() => {
+    Promise.all([fetchStoreOwners()]);
+  }, []);
 
-    // Calculate positions based on index
-    let x, y;
-    if (floor === 1) {
-      // Position stores on first floor
-      if (index % 4 === 0) {
-        x = 17.5; // Store A
-        y = 20;
-      } else if (index % 4 === 2) {
-        x = 17.5; // Store B
-        y = 55;
-      } else if (index % 4 === 1) {
-        x = 72.5; // Store C
-        y = 20;
-      } else {
-        x = 72.5; // Store D
-        y = 55;
-      }
-    } else {
-      // Position stores on second floor
-      if (index % 3 === 0) {
-        x = 17.5; // Store E
-        y = 25;
-      } else if (index % 3 === 1) {
-        x = 17.5; // Store F
-        y = 70;
-      } else {
-        x = 65; // Food Court
-        y = 47.5;
-      }
-    }
+  const updatedStallsGround = stallsGround.map((stall) => ({
+    ...stall,
+    floor: '1',
+    size: `${Math.floor(Math.random() * (1350 - 1150 + 1)) + 1150} sq`,
+  }));
 
-    return {
-      id: store.id,
-      x,
-      y,
-      label: store.name,
-      floor,
-      color: 'bg-primary',
-    };
-  });
+  const updatedStalSecondFllot = stallsSecond.map((stall) => ({
+    ...stall,
+    floor: '1',
+    size: `${Math.floor(Math.random() * (1350 - 1150 + 1)) + 1150} sq`,
+  }));
 
-  // Add available spaces
-  const availableSpaceMarkers = [
-    {
-      id: 'available1',
-      x: 50,
-      y: 30,
-      label: 'Available Space 101',
-      floor: 1,
-      color: 'bg-yellow-500',
-    },
-    {
-      id: 'available2',
-      x: 50,
-      y: 60,
-      label: 'Available Space 201',
-      floor: 2,
-      color: 'bg-yellow-500',
-    },
-  ];
-
-  const allMarkers = [...mapMarkers, ...availableSpaceMarkers];
-
+  const hasImages = viewStallDetails.media && viewStallDetails.media.length > 0;
+  const visibleStores = filteredStores.filter(
+    (store) => store.floor === (showSecondFloor ? 2 : 1),
+  );
   return (
     <div className="flex h-screen">
       <CustomerSidebar />
@@ -258,15 +223,15 @@ export default function StoreMap() {
                           version="1.0"
                         >
                           <DEFDEFSEC />
-                          {stallsSecond.map((stall, index) => {
-                            let fillColor = '#22c55e'; // Default to blue (occupied)
+                          {updatedStalSecondFllot.map((stall, index) => {
+                            let fillColor = '#eab308'; // Default to black (occupied)
 
-                            const stallData = stalls.find(
+                            const stallData = storeOwnersFromDB.find(
                               (s) => String(s.stall_no) === String(stall.id),
                             );
 
                             if (stallData) {
-                              fillColor = '#3b82f6 '; // Green (available)
+                              fillColor = '#222831  '; // Yellow (available)
                             }
 
                             return (
@@ -274,8 +239,13 @@ export default function StoreMap() {
                                 key={index}
                                 onClick={() => {
                                   console.log(stall.id);
+                                  setStallDetails({
+                                    stall_no: stall.id,
+                                    floor: stall.floor,
+                                    size: stall.size,
+                                  });
                                   setSelectedStalls(stall.id);
-                                  setShowModal(true);
+                                  // setShowAddOwnerDialog(true);
                                 }}
                                 id={stall.id}
                                 d={stall.d}
@@ -314,15 +284,15 @@ export default function StoreMap() {
                         >
                           <DEFDEFSEC />
 
-                          {stallsGround.map((stall, index) => {
-                            let fillColor = '#22c55e'; // Default to blue (occupied)
+                          {updatedStallsGround.map((stall, index) => {
+                            let fillColor = '#eab308'; // Default to black (occupied)
 
-                            const stallData = stalls.find(
+                            const stallData = storeOwnersFromDB.find(
                               (s) => String(s.stall_no) === String(stall.id),
                             );
 
                             if (stallData) {
-                              fillColor = '#3b82f6 '; // Green (available)
+                              fillColor = '#222831  '; // Yellow (available)
                             }
 
                             return (
@@ -330,8 +300,18 @@ export default function StoreMap() {
                                 key={index}
                                 onClick={() => {
                                   console.log(stall.id);
+                                  setStallDetails({
+                                    stall_no: stall.id,
+                                    floor: stall.floor,
+                                    size: stall.size,
+                                  });
                                   setSelectedStalls(stall.id);
-                                  setShowModal(true);
+                                  if (stallData) {
+                                    setShowModal(true);
+                                    setViewStallDetails(stallData);
+                                  } else {
+                                    // setShowAddOwnerDialog(true);
+                                  }
                                 }}
                                 id={stall.id}
                                 d={stall.d}
@@ -364,26 +344,28 @@ export default function StoreMap() {
             <div>
               <h2 className="text-xl font-bold mb-4">Available Stores</h2>
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {filteredStores.length > 0 ? (
-                  filteredStores.map((store) => (
+                {visibleStores.length > 0 ? (
+                  visibleStores.map((store) => (
                     <Card
-                      key={store.id}
+                      key={store.storeOwner_id}
                       className="cursor-pointer hover:border-primary transition-colors"
                     >
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg">
-                            {store.name}
+                            {store.storeName}
                           </CardTitle>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={(e) => toggleFavorite(e, store.id)}
+                            onClick={(e) =>
+                              toggleFavorite(e, String(store.storeOwner_id))
+                            }
                             className="h-8 w-8"
                           >
                             <Heart
                               className={`h-5 w-5 ${
-                                favorites.includes(store.id)
+                                favorites.includes(String(store.storeOwner_id))
                                   ? 'fill-red-500 text-red-500'
                                   : ''
                               }`}
@@ -397,7 +379,7 @@ export default function StoreMap() {
                           <Clock className="h-4 w-4" />
                           <span>{store.openingHours}</span>
                         </div>
-                        <div className="flex items-center gap-1 mt-1">
+                        {/* <div className="flex items-center gap-1 mt-1">
                           {Array(5)
                             .fill(0)
                             .map((_, i) => (
@@ -413,11 +395,11 @@ export default function StoreMap() {
                           <span className="text-sm ml-1">
                             ({store.reviewCount})
                           </span>
-                        </div>
+                        </div> */}
                       </CardContent>
                       <CardFooter>
                         <Button variant="outline" className="w-full" asChild>
-                          <Link href={`/customer/store/${store.id}`}>
+                          <Link href={`/customer/store/${store.storeOwner_id}`}>
                             View Details
                           </Link>
                         </Button>
@@ -437,88 +419,168 @@ export default function StoreMap() {
         </div>
       </div>
 
-      {/* Store details dialog for map markers */}
-      <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              {selectedMapStore?.name}
-            </DialogTitle>
-            <DialogDescription>{selectedMapStore?.location}</DialogDescription>
-          </DialogHeader>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b flex justify-between items-center">
+              <h1 className="text-2xl font-semibold">Store Information</h1>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
 
-          {selectedMapStore && (
-            <div className="space-y-4 py-2">
-              <div className="flex items-center gap-1 text-sm">
-                <Clock className="h-4 w-4" />
-                <span>{selectedMapStore.openingHours}</span>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < selectedMapStore.rating
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
+            <div className="p-6 space-y-6">
+              {/* Store Images */}
+              {hasImages && (
+                <div className="space-y-4">
+                  <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={`http://localhost:8800/api/${viewStallDetails.media[selectedImage]?.path}`}
+                      alt={viewStallDetails.media[selectedImage]?.pathName}
+                      className="object-cover w-full h-full"
                     />
-                  ))}
-                <span className="text-sm ml-1">
-                  ({selectedMapStore.reviewCount} reviews)
-                </span>
-              </div>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {viewStallDetails.media.map((image, index) => (
+                      <button
+                        key={image.media_id}
+                        onClick={() => setSelectedImage(index)}
+                        className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden ${
+                          selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                      >
+                        <img
+                          src={`http://localhost:8800/api/${image.path}`}
+                          alt={image.pathName}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <h3 className="font-medium mb-2">Description</h3>
-                <p className="text-sm">{selectedMapStore.description}</p>
-              </div>
+              {/* Basic Information */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Stall Number
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.stall_no}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Owner Name
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.ownerName}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Store Name
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.storeName}
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <h3 className="font-medium mb-2">Current Promotions</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMapStore.promotions.map(
-                    (promo: string, index: number) => (
-                      <Badge key={index} variant="secondary">
-                        {promo}
-                      </Badge>
-                    ),
-                  )}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.email}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <div className="mt-1 bg-gray-50 px-3 py-2 rounded-lg">
+                      {viewStallDetails.phone}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category
+                    </label>
+                    <div className="mt-1">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {viewStallDetails.storeCategory}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={(e) => toggleFavorite(e, selectedMapStore.id)}
-                  className="flex items-center gap-2"
-                >
-                  <Heart
-                    className={`h-4 w-4 ${
-                      favorites.includes(selectedMapStore.id)
-                        ? 'fill-red-500 text-red-500'
-                        : ''
-                    }`}
-                  />
-                  {favorites.includes(selectedMapStore.id)
-                    ? 'Remove from Favorites'
-                    : 'Add to Favorites'}
-                </Button>
+              {/* Space Information */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h2 className="text-lg font-semibold mb-4">
+                  Space Information
+                </h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Location
+                    </span>
+                    <p className="mt-1">{viewStallDetails.location}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Size
+                    </span>
+                    <p className="mt-1">{viewStallDetails.size}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Floor
+                    </span>
+                    <p className="mt-1">
+                      {viewStallDetails.floor === 1
+                        ? 'Ground Floor'
+                        : `${viewStallDetails.floor}nd Floor`}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">
+                      Opening Hours
+                    </span>
+                    <p className="mt-1">{viewStallDetails.openingHours}</p>
+                  </div>
+                </div>
+              </div>
 
-                <Button asChild>
-                  <Link href={`/customer/store/${selectedMapStore.id}`}>
-                    View Details
-                  </Link>
-                </Button>
+              {/* Description */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Description</h2>
+                <p className="text-gray-600">{viewStallDetails.description}</p>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

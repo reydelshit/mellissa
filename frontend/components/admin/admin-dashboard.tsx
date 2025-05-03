@@ -34,6 +34,8 @@ import { stallsGround, stallsSecond } from '@/lib/data';
 import { dummyStores } from '@/lib/dummy-data';
 import axios from 'axios';
 import { Minus, PanelRightClose, Plus, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 import { useEffect, useState } from 'react';
 import {
   TransformComponent,
@@ -42,7 +44,7 @@ import {
 } from 'react-zoom-pan-pinch';
 import { toast } from 'sonner';
 
-interface StoreDetails {
+export interface StoreDetails {
   storeOwner_id: number;
   stall_no: string;
   ownerName: string;
@@ -114,6 +116,8 @@ const Controls = ({
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState('map');
   const [showAddOwnerDialog, setShowAddOwnerDialog] = useState(false);
   const [selectedSpace, setSelectedSpace] = useState<any>(null);
@@ -244,6 +248,16 @@ export default function AdminDashboard() {
 
   const hasImages = viewStallDetails.media && viewStallDetails.media.length > 0;
 
+  const handleLogout = () => {
+    localStorage.removeItem('store_owner_id');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('store_owner_details');
+    localStorage.removeItem('customer_details');
+
+    router.push('/');
+  };
+
   return (
     <div className="flex h-screen w-full">
       {/* <AdminSidebar /> */}
@@ -251,14 +265,20 @@ export default function AdminDashboard() {
         <div className=" p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold"> Administration</h1>
-            <p className="text-muted-foreground">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
+            <div className="flex flex-col">
+              <p className="text-muted-foreground">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+
+              <Button onClick={handleLogout} variant={'outline'}>
+                Logout
+              </Button>
+            </div>
           </div>
 
           <Tabs
@@ -317,7 +337,7 @@ export default function AdminDashboard() {
                               {updatedStalSecondFllot.map((stall, index) => {
                                 let fillColor = '#eab308'; // Default to black (occupied)
 
-                                const stallData = stalls.find(
+                                const stallData = storeOwnersFromDB.find(
                                   (s) =>
                                     String(s.stall_no) === String(stall.id),
                                 );
