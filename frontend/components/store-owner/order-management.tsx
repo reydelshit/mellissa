@@ -33,6 +33,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dummyOrders } from '@/lib/dummy-data';
 import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
 import axios from 'axios';
+import { usePathname } from 'next/navigation';
+import path from 'path';
+import CustomerSidebar from '../customer/customer-sidebar';
 
 export type OrderTypes = {
   order_id: string;
@@ -56,16 +59,31 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState(null as OrderTypes | null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
-
+  const pathname = usePathname();
   const store_owner_id = localStorage.getItem('store_owner_id');
 
   const fetchOrders = async () => {
     try {
       const response = await axios.get('http://localhost:8800/api/orders');
-      const filteredOrders = response.data.filter(
-        (order: any) => String(order.store_id) === store_owner_id,
-      );
-      setOrders(filteredOrders);
+
+      if (pathname.includes('store-owner')) {
+        const store_owner_id = localStorage.getItem('store_owner_id');
+
+        const filteredOrders = response.data.filter(
+          (order: any) => String(order.store_id) === store_owner_id,
+        );
+
+        setOrders(filteredOrders);
+      } else {
+        const user_id = localStorage.getItem('user_id');
+
+        const filteredOrders = response.data.filter(
+          (order: any) => String(order.user_id) === user_id,
+        );
+
+        setOrders(filteredOrders);
+      }
+
       console.log('Fetched orders:', response.data);
     } catch (error) {
       console.error('Error fetching promotions:', error);
@@ -148,7 +166,11 @@ export default function OrderManagement() {
 
   return (
     <div className="flex h-screen">
-      <StoreOwnerSidebar />
+      {pathname.includes('store-owner') ? (
+        <StoreOwnerSidebar />
+      ) : (
+        <CustomerSidebar />
+      )}
       <div className="flex-1 overflow-auto">
         <div className="container p-6 space-y-6">
           <div>
@@ -249,33 +271,35 @@ export default function OrderManagement() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                <Select
-                                  value={order.status}
-                                  onValueChange={(value) =>
-                                    handleUpdateOrderStatus(
-                                      order.order_id,
-                                      value,
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-[130px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">
-                                      Pending
-                                    </SelectItem>
-                                    <SelectItem value="processing">
-                                      Processing
-                                    </SelectItem>
-                                    <SelectItem value="completed">
-                                      Completed
-                                    </SelectItem>
-                                    <SelectItem value="cancelled">
-                                      Cancelled
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                {pathname.includes('store-owner') && (
+                                  <Select
+                                    value={order.status}
+                                    onValueChange={(value) =>
+                                      handleUpdateOrderStatus(
+                                        order.order_id,
+                                        value,
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[130px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pending">
+                                        Pending
+                                      </SelectItem>
+                                      <SelectItem value="processing">
+                                        Processing
+                                      </SelectItem>
+                                      <SelectItem value="completed">
+                                        Completed
+                                      </SelectItem>
+                                      <SelectItem value="cancelled">
+                                        Cancelled
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -336,19 +360,22 @@ export default function OrderManagement() {
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
-                                  <Button
-                                    variant={'default'}
-                                    size="sm"
-                                    onClick={() =>
-                                      handleUpdateOrderStatus(
-                                        order.order_id,
-                                        'completed',
-                                      )
-                                    }
-                                  >
-                                    <Check className="h-4 w-4 mr-1" />
-                                    Complete
-                                  </Button>
+
+                                  {pathname.includes('store-owner') && (
+                                    <Button
+                                      variant={'default'}
+                                      size="sm"
+                                      onClick={() =>
+                                        handleUpdateOrderStatus(
+                                          order.order_id,
+                                          'completed',
+                                        )
+                                      }
+                                    >
+                                      <Check className="h-4 w-4 mr-1" />
+                                      Complete
+                                    </Button>
+                                  )}
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -539,22 +566,24 @@ export default function OrderManagement() {
                       </Badge>
                     </div>
 
-                    <Select
-                      value={selectedOrder.status}
-                      onValueChange={(value) =>
-                        handleUpdateOrderStatus(selectedOrder.order_id, value)
-                      }
-                    >
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {pathname.includes('store-owner') && (
+                      <Select
+                        value={selectedOrder.status}
+                        onValueChange={(value) =>
+                          handleUpdateOrderStatus(selectedOrder.order_id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[150px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -639,21 +668,23 @@ export default function OrderManagement() {
                   Close
                 </Button>
 
-                {selectedOrder && selectedOrder.status === 'pending' && (
-                  <Button
-                    variant={'default'}
-                    onClick={() => {
-                      handleUpdateOrderStatus(
-                        selectedOrder.order_id,
-                        'completed',
-                      );
-                      setShowOrderDetails(false);
-                    }}
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Mark as Completed
-                  </Button>
-                )}
+                {pathname.includes('store-owner') &&
+                  selectedOrder &&
+                  selectedOrder.status === 'pending' && (
+                    <Button
+                      variant={'default'}
+                      onClick={() => {
+                        handleUpdateOrderStatus(
+                          selectedOrder.order_id,
+                          'completed',
+                        );
+                        setShowOrderDetails(false);
+                      }}
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Mark as Completed
+                    </Button>
+                  )}
               </DialogFooter>
             </DialogContent>
           </Dialog>

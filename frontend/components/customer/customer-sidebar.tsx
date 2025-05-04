@@ -4,7 +4,15 @@ import type React from 'react';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, MapPin, Heart, ShoppingCart, User, LogOut } from 'lucide-react';
+import {
+  Home,
+  MapPin,
+  Heart,
+  ShoppingCart,
+  User,
+  LogOut,
+  ShoppingBag,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -85,6 +93,9 @@ export default function CustomerSidebar() {
           </NavItem>
           <NavItem href="/customer/favorites" icon={Heart}>
             Favorites
+          </NavItem>
+          <NavItem href="/customer/orders" icon={ShoppingBag}>
+            Orders
           </NavItem>
           <NavItem href="/customer/cart" icon={ShoppingCart}>
             Cart
