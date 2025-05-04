@@ -82,14 +82,16 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const connection = await databaseConnectionPromise;
-    const [rows]: any = await connection.query(`
-      SELECT 
+
+    // Fetch store data with media, products, and promotions
+    const [rows]: any = await connection.query(
+      `SELECT 
         store_owner.*, 
         media_gallery.media_id AS media_id,
         media_gallery.path AS media_path,
         media_gallery.pathName AS media_pathName,
         media_gallery.created_at AS media_created_at,
-    
+
         products.product_id AS product_id,
         products.product_name AS product_name,
         products.price AS product_price,
@@ -98,7 +100,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
         products.inventory AS product_inventory,
         products.created_at AS product_created_at,
         products.product_image AS product_image,
-    
+
         promotions.promotion_id AS promotion_id,
         promotions.title AS promotion_title,
         promotions.startDate AS promotion_startDate,
@@ -107,13 +109,32 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
         promotions.discount AS promotion_discount,
         promotions.description AS promotion_description,
         promotions.status AS promotion_status
-    
+
       FROM store_owner 
       LEFT JOIN media_gallery ON media_gallery.storeOwner_id = store_owner.storeOwner_id 
       LEFT JOIN products ON products.storeOwner_id = store_owner.storeOwner_id
       LEFT JOIN promotions ON promotions.storeOwner_id = store_owner.storeOwner_id
-      ORDER BY store_owner.created_at DESC;
+      ORDER BY store_owner.created_at DESC;`,
+    );
+
+    // Fetch rating information per storeOwner_id
+    const [ratingsRows]: any = await connection.query(`
+      SELECT 
+        products.storeOwner_id,
+        COUNT(ratings.rating_id) AS review_count,
+        ROUND(AVG(ratings.rating), 1) AS avg_rating
+      FROM ratings
+      JOIN products ON products.product_id = ratings.product_id
+      GROUP BY products.storeOwner_id
     `);
+
+    const ratingMap = new Map();
+    ratingsRows.forEach((r: any) => {
+      ratingMap.set(r.storeOwner_id, {
+        avg_rating: r.avg_rating || 0,
+        review_count: r.review_count || 0,
+      });
+    });
 
     const storeOwnerMap = new Map();
 
@@ -147,9 +168,16 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       } = row;
 
       if (!storeOwnerMap.has(storeOwner_id)) {
+        const ratingInfo = ratingMap.get(storeOwner_id) || {
+          avg_rating: 0,
+          review_count: 0,
+        };
+
         storeOwnerMap.set(storeOwner_id, {
           storeOwner_id,
           ...storeOwnerData,
+          avg_rating: ratingInfo.avg_rating,
+          review_count: ratingInfo.review_count,
           media: [],
           products: [],
           promotions: [],
@@ -201,7 +229,6 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     }
 
     const result = Array.from(storeOwnerMap.values());
-
     res.json(result);
   } catch (err) {
     console.error('Database fetch error:', err);

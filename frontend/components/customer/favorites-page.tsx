@@ -18,12 +18,85 @@ import CustomerSidebar from '@/components/customer/customer-sidebar';
 import axios from 'axios';
 import { StoreDetailsType } from '../admin/admin-dashboard';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export interface StoreFavorites extends StoreDetailsType {
   created_at: string;
   favorites_id: number;
   store_id: string;
   user_id: string;
+}
+
+export interface StoreProps {
+  favorites_id: number | string;
+  storeOwner_id: number | string;
+  storeName: string;
+  location: string;
+  openingHours: string;
+  isFavorite?: boolean;
+  onToggleFavorite: (
+    e: React.MouseEvent<HTMLButtonElement>,
+    storeId: string,
+  ) => void;
+}
+
+export function FavoriteStoreCard({
+  favorites_id,
+  storeOwner_id,
+  storeName,
+  location,
+  openingHours,
+  isFavorite = true,
+  onToggleFavorite,
+}: StoreProps) {
+  return (
+    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:translate-y-[-4px]">
+      <CardHeader className="pb-2 relative">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-lg font-semibold line-clamp-1">
+            {storeName}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => onToggleFavorite(e, String(storeOwner_id))}
+            className="h-8 w-8 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors absolute right-4 top-4"
+            aria-label={
+              isFavorite ? 'Remove from favorites' : 'Add to favorites'
+            }
+          >
+            <Heart
+              className={cn(
+                'h-5 w-5 transition-all duration-300',
+                isFavorite
+                  ? 'fill-rose-500 text-rose-500 scale-110'
+                  : 'text-muted-foreground hover:fill-rose-300 hover:text-rose-500',
+              )}
+            />
+          </Button>
+        </div>
+        <CardDescription className="flex items-center gap-1.5 text-sm">
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="line-clamp-1">{location}</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pb-4">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{openingHours}</span>
+        </div>
+      </CardContent>
+      <CardFooter className="pt-0">
+        <Button
+          variant="outline"
+          className="w-full border-primary/30 hover:bg-primary/5 hover:text-primary transition-all duration-300 group-hover:border-primary/70"
+          asChild
+        >
+          <Link href={`/customer/store/${storeOwner_id}`}>View Store</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }
 
 export default function FavoritesPage() {
@@ -122,98 +195,36 @@ export default function FavoritesPage() {
   return (
     <div className="flex h-screen">
       <CustomerSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="container p-6 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Your Favorites</h1>
-            <p className="text-muted-foreground">
-              Stores you've saved for quick access
+      <div className="w-full flex-1 flex flex-col p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            My Favorite Stores
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Stores you've marked as favorites for quick access
+          </p>
+        </div>
+
+        {favorites.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-muted/20">
+            <p className="text-muted-foreground mb-2">
+              You haven't added any favorite stores yet
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Mark stores as favorites to access them quickly from this page
             </p>
           </div>
-
-          {favorites.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {favorites.map((store) => (
-                <Card
-                  key={store.favorites_id}
-                  className="hover:border-primary transition-colors"
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">
-                        {store.storeName}
-                      </CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) =>
-                          toggleFavorite(e, String(store.storeOwner_id))
-                        }
-                        className="h-8 w-8"
-                      >
-                        <Heart className="h-5 w-5 fill-red-500 text-red-500" />
-                      </Button>
-                    </div>
-                    <CardDescription className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {store.location}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="flex items-center gap-1 text-sm">
-                      <Clock className="h-4 w-4" />
-                      <span>{store.openingHours}</span>
-                    </div>
-                    {/* <div className="flex items-center gap-1 mt-1">
-                      {Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < store.rating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      <span className="text-sm ml-1">
-                        ({store.reviewCount})
-                      </span>
-                    </div> */}
-                    {/* <div className="flex flex-wrap gap-2 mt-2">
-                      {store.promotions.map((promo, index) => (
-                        <Badge key={index} variant="secondary">
-                          {promo.title} - {promo.discount}%
-                        </Badge>
-                      ))}
-                    </div> */}
-                  </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href={`/customer/store/${store.storeOwner_id}`}>
-                        View Store
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="bg-muted rounded-full p-6 mb-4">
-                <Heart className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h2 className="text-xl font-medium mb-2">No favorites yet</h2>
-              <p className="text-muted-foreground mb-6">
-                You haven't added any stores to your favorites.
-              </p>
-              <Button asChild>
-                <a href="/customer/stores">Browse Stores</a>
-              </Button>
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+            {favorites.map((store) => (
+              <FavoriteStoreCard
+                key={store.favorites_id}
+                {...store}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

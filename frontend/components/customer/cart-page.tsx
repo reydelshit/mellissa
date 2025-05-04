@@ -49,7 +49,45 @@ export default function CartPage() {
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
 
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewName, setReviewName] = useState('');
+
   const user_id = localStorage.getItem('user_id');
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Send a review for each product in the cart
+      await Promise.all(
+        cart.map((item) =>
+          axios.post('http://localhost:8800/api/review/create', {
+            user_id,
+            product_id: item.product_id,
+            rating,
+            fullname: reviewName,
+            reviewText: reviewText,
+          }),
+        ),
+      );
+
+      toast('Reviews submitted successfully!');
+
+      // Reset form state
+      setRating(0);
+      setReviewText('');
+      setShowCheckout(false);
+      setShowReviewDialog(false);
+
+      localStorage.removeItem('cart');
+      setCart([]);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || 'Failed to submit reviews');
+    }
+  };
 
   const updateQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -98,14 +136,8 @@ export default function CartPage() {
 
       toast('Order placed successfully!');
 
-      // Optionally reset checkout form
-      setFullName('');
-      setAddress('');
-      setPaymentMethod('card');
+      setShowReviewDialog(true);
       setShowCheckout(false);
-
-      localStorage.removeItem('cart');
-      setCart([]);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to place order');
     }
@@ -356,25 +388,49 @@ export default function CartPage() {
               </DialogHeader>
 
               <div className="space-y-4 py-4">
+                {/* Star Rating */}
                 <div className="flex justify-center space-x-1">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <Button key={rating} variant="ghost" size="icon">
-                      <Star className="h-6 w-6" />
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Button
+                      key={star}
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoveredRating(star)}
+                      onMouseLeave={() => setHoveredRating(0)}
+                    >
+                      <Star
+                        className="h-6 w-6"
+                        fill={
+                          (hoveredRating || rating) >= star ? '#facc15' : 'none'
+                        }
+                        stroke={
+                          (hoveredRating || rating) >= star
+                            ? '#facc15'
+                            : 'currentColor'
+                        }
+                      />
                     </Button>
                   ))}
                 </div>
 
+                {/* Review Text */}
                 <div className="space-y-2">
                   <Label htmlFor="review">Your Review</Label>
                   <Textarea
                     id="review"
                     placeholder="Tell us about your experience..."
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
                   />
                 </div>
               </div>
 
               <DialogFooter>
-                <Button onClick={() => setShowReviewDialog(false)}>
+                <Button
+                  onClick={handleSubmitReview}
+                  disabled={rating === 0 || reviewText.trim() === ''}
+                >
                   Submit Review
                 </Button>
               </DialogFooter>

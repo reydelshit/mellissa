@@ -50,6 +50,7 @@ import { Badge } from '@/components/ui/badge';
 import { dummyMenuItems } from '@/lib/dummy-data';
 import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 type Product = {
   category: string;
@@ -137,6 +138,8 @@ export default function ProductsManagement() {
           },
         );
         console.log('Product updated successfully');
+
+        toast('Product updated successfully!');
       } else {
         // If adding, create a new product
         await axios.post(
@@ -150,6 +153,7 @@ export default function ProductsManagement() {
         );
 
         console.log('Product added successfully');
+        toast('Product added successfully!');
       }
 
       fetchProducts();
@@ -207,6 +211,8 @@ export default function ProductsManagement() {
         await axios.delete(`http://localhost:8800/api/products/${productID}`);
 
         fetchProducts();
+
+        toast('Deleted product successfully!');
       } catch (error) {
         console.error('Error deleting image:', error);
       }
@@ -242,62 +248,85 @@ export default function ProductsManagement() {
               Add New Product
             </Button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-8">
             {products.filter(
               (prod) => String(prod.storeOwner_id) === storeOwnerID,
             ).length > 0 ? (
-              products
-                .filter((prod) => String(prod.storeOwner_id) === storeOwnerID)
-                .map((product) => (
-                  <Card key={product.product_id}>
-                    <CardHeader className="pb-2">
-                      <div className="bg-gray-200 aspect-square rounded-md flex items-center justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 cursor-pointer transition-all duration-200">
+                {products
+                  .filter((prod) => String(prod.storeOwner_id) === storeOwnerID)
+                  .map((product) => (
+                    <div
+                      key={product.product_id}
+                      className="group bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
+                    >
+                      {/* Product image with consistent aspect ratio */}
+                      <div className="aspect-square bg-gray-50 relative overflow-hidden">
                         <img
                           src={`http://localhost:8800/api/${product.product_image}`}
-                          alt={`Image ${product.product_id}`}
+                          alt={product.product_name}
                           className="object-cover w-full h-full"
                         />
+
+                        {/* Category badge with subtle styling */}
+                        <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-xs font-medium px-2.5 py-1 rounded-full text-gray-700">
+                          {product.category}
+                        </span>
                       </div>
 
-                      <div className="flex justify-between">
-                        <CardTitle>{product.product_name}</CardTitle>
-                        <Badge variant="secondary">{product.category}</Badge>
+                      {/* Product details with appropriate spacing */}
+                      <div className="p-5">
+                        <div className="mb-3">
+                          <h3 className="text-base font-medium text-gray-900">
+                            {product.product_name}
+                          </h3>
+                          <div className="flex items-baseline mt-1">
+                            <span className="text-lg font-semibold text-gray-900">
+                              ${product.price.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-gray-500 line-clamp-2 h-10 mb-4">
+                          {product.description}
+                        </p>
+
+                        {/* Action buttons with professional styling */}
+                        <div className="pt-3 mt-3 border-t border-gray-100 flex items-center justify-between">
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 inline-flex items-center"
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1.5" />
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteProduct(product)}
+                            className="text-sm font-medium text-gray-500 hover:text-red-600 inline-flex items-center"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                      <CardDescription className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {product.price.toFixed(2)}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <p className="text-sm">{product.description}</p>
-                    </CardContent>
-                    <CardFooter>
-                      <div className="flex gap-2 w-full">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => handleEditProduct(product)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => handleDeleteProduct(product)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))
+                    </div>
+                  ))}
+              </div>
             ) : (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center">
-                <p className="text-muted-foreground mt-[5rem]">
-                  No products available. Please add a product.
-                </p>
+              <div className="text-center py-16 px-4 rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                <div className="mx-auto max-w-lg">
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No products
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Get started by creating your first product
+                  </p>
+                  <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -8,6 +8,7 @@ import { cartsRouter } from '../api/carts';
 import { ordersRouter } from '../api/order';
 import { orderItemsRouter } from '../api/orderItems';
 import { favoritesRouter } from '../api/favorites';
+import { ratingRouter } from '../api/review';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/carts', cartsRouter);
 router.use('/orders', ordersRouter);
 router.use('/order-items', orderItemsRouter);
 router.use('/favorites', favoritesRouter);
+router.use('/review', ratingRouter);
 
 export default router;

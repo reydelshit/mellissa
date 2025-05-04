@@ -42,6 +42,7 @@ import {
   PanelRightClose,
   Plus,
   Save,
+  Star,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -494,6 +495,34 @@ export default function StoreManagement() {
                   </div>
 
                   <div>
+                    <h3 className="font-medium mb-2">Store Rating</h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      {Array(5)
+                        .fill(0)
+                        .map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i <
+                              Number(
+                                storeDetailsFromDBWithPromotionsProductsMedia?.avg_rating,
+                              )
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      <span className="text-sm ml-1">
+                        (
+                        {
+                          storeDetailsFromDBWithPromotionsProductsMedia?.review_count
+                        }
+                        )
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-medium">Current Promotions</h3>
                       <Button
@@ -531,23 +560,6 @@ export default function StoreManagement() {
                       )}
                     </div>
                   </div>
-
-                  {/* <div>
-                    <h3 className="font-medium mb-2">Store Rating</h3>
-                    <div className="flex items-center gap-1">
-                      {Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-5 w-5 ${i < store.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                          />
-                        ))}
-                      <span className="ml-2">
-                        {store.rating}/5 ({store.reviewCount} reviews)
-                      </span>
-                    </div>
-                  </div> */}
                 </CardContent>
               </Card>
             </TabsContent>

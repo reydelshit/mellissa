@@ -26,6 +26,8 @@ import {
   PanelRightClose,
   Plus,
   Search,
+  ShoppingCart,
+  Star,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -83,9 +85,7 @@ const Controls = ({
 export default function StoreMap() {
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<StoreFavorites[]>([]);
-
   const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
-
   const [showSecondFloor, setShowSecondFloor] = useState(false);
   const [selectedStalls, setSelectedStalls] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -96,11 +96,45 @@ export default function StoreMap() {
     size: '',
   });
   const [user_id, setUser_id] = useState('');
-
   const [viewStallDetails, setViewStallDetails] = useState(
     {} as StoreDetailsType,
   );
   const [selectedImage, setSelectedImage] = useState(0);
+  const [cart, setCart] = useState<{ product_id: string; quantity: number }[]>(
+    () => {
+      const storedCart = localStorage.getItem('cart');
+      return storedCart ? JSON.parse(storedCart) : [];
+    },
+  );
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (item: any) => {
+    setCart((prevCart) => {
+      // Check if the item already exists in the cart
+      const existingItem = prevCart.find(
+        (cartItem) => cartItem.product_id === item.product_id,
+      );
+
+      if (existingItem) {
+        // If the item exists, update its quantity
+        return prevCart.map((cartItem) =>
+          cartItem.product_id === item.product_id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem,
+        );
+      } else {
+        // If the item doesn't exist, add it with quantity 1
+        return [...prevCart, { ...item, quantity: 1 }];
+      }
+    });
+
+    toast('Added to cart successful', {
+      description: 'This item has been added to your cart.',
+    });
+  };
 
   const filteredStores = storeOwnersFromDB.filter(
     (store) =>
@@ -455,23 +489,23 @@ export default function StoreMap() {
                           <Clock className="h-4 w-4" />
                           <span>{store.openingHours}</span>
                         </div>
-                        {/* <div className="flex items-center gap-1 mt-1">
+                        <div className="flex items-center gap-1 mt-1">
                           {Array(5)
                             .fill(0)
                             .map((_, i) => (
                               <Star
                                 key={i}
                                 className={`h-4 w-4 ${
-                                  i < store.rating
+                                  i < Number(store.avg_rating)
                                     ? 'fill-yellow-400 text-yellow-400'
                                     : 'text-gray-300'
                                 }`}
                               />
                             ))}
                           <span className="text-sm ml-1">
-                            ({store.reviewCount})
+                            ({store.review_count})
                           </span>
-                        </div> */}
+                        </div>
                       </CardContent>
                       <CardFooter>
                         <Button variant="outline" className="w-full" asChild>
@@ -652,6 +686,80 @@ export default function StoreMap() {
               <div>
                 <h2 className="text-lg font-semibold mb-2">Description</h2>
                 <p className="text-gray-600">{viewStallDetails.description}</p>
+              </div>
+            </div>
+
+            <div className="min-h-screen bg-gradient-to-b  py-12 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-12">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                    Our Products
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Discover our curated collection of premium products designed
+                    to enhance your lifestyle.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  {viewStallDetails.products.map((item) => {
+                    const cartItem = cart.find(
+                      (i: { product_id: string; quantity: number }) =>
+                        i.product_id === String(item.product_id),
+                    );
+
+                    return (
+                      <div
+                        key={item.product_id}
+                        className="group relative transition-all duration-300 hover:-translate-y-1"
+                      >
+                        <Card className="h-full overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm hover:shadow-md transition-all duration-300">
+                          <div className="h-48 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 flex items-center justify-center">
+                            <img
+                              src={`http://localhost:8800/api/${item.product_image}`}
+                              alt={`Image ${item.product_id}`}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+
+                          <CardHeader className="pb-2 pt-4">
+                            <div className="flex justify-between items-start">
+                              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white line-clamp-2">
+                                {item.product_name}
+                              </CardTitle>
+                              <CardDescription className="text-lg font-medium text-primary">
+                                ${item.price.toFixed(2)}
+                              </CardDescription>
+                            </div>
+                          </CardHeader>
+
+                          <CardContent className="pb-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {item.description}
+                            </p>
+                          </CardContent>
+
+                          <CardFooter className="pt-2 pb-4">
+                            <Button
+                              variant="default"
+                              className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2 transition-all duration-200 shadow-sm hover:shadow group-hover:scale-[1.02]"
+                              onClick={() => addToCart(item)}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              Add to Cart
+                            </Button>
+                          </CardFooter>
+                        </Card>
+
+                        {item.created_at && (
+                          <div className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                            NEW
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

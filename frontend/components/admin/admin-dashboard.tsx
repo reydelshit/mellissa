@@ -89,6 +89,8 @@ export interface StoreDetailsType {
   media: Media[];
   products: Product[];
   promotions: Promotion[];
+  avg_rating: string;
+  review_count: number;
 }
 
 type CustomerType = {

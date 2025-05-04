@@ -14,10 +14,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import axios from 'axios';
-import { Clock, Heart, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { Clock, Heart, ShoppingCart, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Promotion, StoreDetailsType } from '../admin/admin-dashboard';
 import { toast } from 'sonner';
+import { Promotion, StoreDetailsType } from '../admin/admin-dashboard';
+
+interface ReviewType {
+  productName: string;
+  storeName: string;
+  customerName: string;
+  reviewText: string;
+  rating: number;
+  createdAt: string;
+}
 
 export default function StoreDetails({ storeId }: { storeId: string }) {
   const [store, setStore] = useState<StoreDetailsType | null>(null);
@@ -29,10 +38,19 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
     },
   );
   const [loading, setLoading] = useState(true);
-
   const [selectedImage, setSelectedImage] = useState(0);
-
   const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
+  const [reviews, setReviews] = useState<ReviewType[]>([]);
+
+  const fetchStoreReviews = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/review');
+      console.log(response.data);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
+    }
+  };
 
   const fetchStoreOwners = async () => {
     try {
@@ -64,6 +82,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
 
   useEffect(() => {
     fetchStoreOwners();
+    fetchStoreReviews();
   }, []);
 
   const toggleFavorite = (storeId: string) => {
@@ -205,23 +224,21 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                     <Clock className="h-4 w-4" />
                     <span>{store.openingHours}</span>
                   </div>
-                  {/* <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 mt-1">
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
                         <Star
                           key={i}
                           className={`h-4 w-4 ${
-                            i < store.rating
+                            i < Number(store.avg_rating)
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-gray-300'
                           }`}
                         />
                       ))}
-                    <span className="text-sm ml-1">
-                      ({store.reviewCount} reviews)
-                    </span>
-                  </div> */}
+                    <span className="text-sm ml-1">({store.review_count})</span>
+                  </div>
                   <div>
                     <h3 className="font-medium mb-2">Description</h3>
                     <p className="text-sm">{store.description}</p>
@@ -327,41 +344,85 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
             </TabsContent>
 
             <TabsContent value="reviews" className="pt-4">
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <div className="flex justify-between">
-                        <CardTitle className="text-base">
-                          Customer Name
-                        </CardTitle>
-                        <div className="flex">
-                          {Array(5)
-                            .fill(0)
-                            .map((_, j) => (
-                              <Star
-                                key={j}
-                                className={`h
-                                className={\`h-4 w-4 ${
-                                  j < 4
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+              <main className="min-h-screen px-4 py-12">
+                <div className="mx-auto max-w-7xl">
+                  <div className="text-center mb-12">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                      Customer Reviews
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                      Read what our customers have to say about our products and
+                      services.
+                    </p>
+                  </div>
+
+                  {loading ? (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {Array(3)
+                        .fill(0)
+                        .map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-64 animate-pulse rounded-xl bg-gray-200"
+                          />
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {reviews.map((review, index) => (
+                        <div
+                          key={index}
+                          className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl"
+                          style={{
+                            animation: 'fadeInUp 0.5s ease-out forwards',
+                            opacity: 0,
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-900">
+                                    {review.customerName}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {review.createdAt}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex">
+                              {Array(5)
+                                .fill(0)
+                                .map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-5 w-5 ${
+                                      i < review.rating
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'fill-gray-200 text-gray-200'
+                                    }`}
+                                  />
+                                ))}
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <h3 className="font-medium text-gray-900">
+                              {review.productName}
+                            </h3>
+                            <p className="mt-2 text-gray-600 leading-relaxed">
+                              {review.reviewText}
+                            </p>
+                          </div>
+
+                          <div className="absolute -right-12 -top-12 h-24 w-24 rotate-12 bg-gradient-to-br from-gray-100 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                         </div>
-                      </div>
-                      <CardDescription>2 weeks ago</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm">
-                        Great store with excellent service and products. Would
-                        definitely recommend to others!
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </main>
             </TabsContent>
 
             <TabsContent value="info" className="pt-4">

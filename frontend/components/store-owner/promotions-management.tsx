@@ -8,6 +8,7 @@ import {
   Edit,
   Trash2,
   AlertCircle,
+  Tag,
 } from 'lucide-react';
 import {
   Card,
@@ -50,6 +51,7 @@ import { Badge } from '@/components/ui/badge';
 import { dummyStores } from '@/lib/dummy-data';
 import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 type Promotion = {
   promotion_id: number;
@@ -135,10 +137,17 @@ export default function PromotionsManagement() {
           promotionData,
         );
         console.log('Promotion updated successfully');
+
+        toast('Promotion updated successfully!');
       } else {
         // Create new promotion
-        await axios.post('http://localhost:8800/api/promotions', promotionData);
+        await axios.post(
+          'http://localhost:8800/api/promotions/create',
+          promotionData,
+        );
         console.log('Promotion added successfully');
+
+        toast('Promotion added successfully!');
       }
 
       fetchPromotions(); // Refresh promotions list
@@ -155,6 +164,7 @@ export default function PromotionsManagement() {
   };
 
   const handleEditPromo = (promo: Promotion) => {
+    setEditingPromotion(promo);
     setShowPromoDialog(true);
   };
 
@@ -177,6 +187,14 @@ export default function PromotionsManagement() {
         console.error('Error deleting image:', error);
       }
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
@@ -214,61 +232,106 @@ export default function PromotionsManagement() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-8">
             {promotions.filter(
               (promo) => String(promo.storeOwner_id) === storeOwnerID,
             ).length > 0 ? (
-              promotions
-                .filter((promo) => String(promo.storeOwner_id) === storeOwnerID)
-                .map((promo) => (
-                  <Card key={promo.promotion_id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between">
-                        <CardTitle>{promo.title}</CardTitle>
-                        <Badge variant="success">Active</Badge>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {promotions
+                  .filter(
+                    (promo) => String(promo.storeOwner_id) === storeOwnerID,
+                  )
+                  .map((promo) => (
+                    <div
+                      key={promo.promotion_id}
+                      className="group bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
+                    >
+                      {/* Colored header based on status */}
+                      <div
+                        className={`px-5 py-4 border-b ${
+                          promo.status === 'active'
+                            ? 'bg-green-50 border-green-100'
+                            : promo.status === 'scheduled'
+                            ? 'bg-blue-50 border-blue-100'
+                            : 'bg-gray-50 border-gray-100'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-base font-medium text-gray-900">
+                            {promo.title}
+                          </h3>
+                          <span
+                            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                              promo.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : promo.status === 'scheduled'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {promo.status.charAt(0).toUpperCase() +
+                              promo.status.slice(1)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center mt-1.5 text-xs text-gray-500">
+                          <Calendar className="h-3 w-3 mr-1.5" />
+                          {formatDate(promo.startDate)} -{' '}
+                          {formatDate(promo.endDate)}
+                        </div>
                       </div>
-                      <CardDescription className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {promo.startDate} to {promo.endDate}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <p className="text-sm mb-2">{promo.description}</p>
-                      <div className="flex items-center gap-1 text-sm font-medium">
-                        <Percent className="h-4 w-4" />
-                        <span>{promo.discount} Discount</span>
+
+                      {/* Promotion details */}
+                      <div className="p-5">
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">
+                          {promo.description}
+                        </p>
+
+                        <div className="flex items-center text-indigo-600 font-medium">
+                          <Percent className="h-4 w-4 mr-2" />
+                          <span>{promo.discount} discount</span>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="pt-4 mt-4 border-t border-gray-100 flex items-center justify-between">
+                          <button
+                            onClick={() => handleEditPromo(promo)}
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 inline-flex items-center"
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1.5" />
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => handleDeletePromo(promo)}
+                            className="text-sm font-medium text-gray-500 hover:text-red-600 inline-flex items-center"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    </CardContent>
-                    <CardFooter>
-                      <div className="flex gap-2 w-full">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => handleEditPromo(promo)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => handleDeletePromo(promo)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))
+                    </div>
+                  ))}
+              </div>
             ) : (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center">
-                <p className="text-muted-foreground mt-[5rem]">
-                  No promotions available. Please add a promotion.
-                </p>
+              <div className="text-center py-16 px-4 rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                <div className="mx-auto max-w-lg">
+                  <Tag className="mx-auto h-10 w-10 text-gray-400" />
+                  <h3 className="mt-2 text-lg font-medium text-gray-900">
+                    No promotions
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500 mb-6">
+                    Get started by creating your first promotional campaign
+                  </p>
+                  <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Promotion
+                  </button>
+                </div>
               </div>
             )}
           </div>
-
           <Dialog open={showPromoDialog} onOpenChange={setShowPromoDialog}>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
