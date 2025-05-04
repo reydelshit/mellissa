@@ -35,8 +35,7 @@ const botResponses = [
 
 export const getResponse = async (userMessage: string): Promise<string> => {
   const apiToken = process.env.NEXT_PUBLIC_HF_API_TOKEN;
-  const apiUrl =
-    'https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1'; // Correct model URL
+  const apiUrl = process.env.NEXT_PUBLIC_HF_URL; // Correct model URL
 
   const apiRequestJson = {
     inputs: `<s>[INST] You are a helpful store assistant. Keep answers short and friendly. ${userMessage} [/INST]`,
@@ -48,6 +47,12 @@ export const getResponse = async (userMessage: string): Promise<string> => {
   };
 
   try {
+    if (!apiUrl) {
+      throw new Error(
+        'API URL is not defined. Please check your environment variables.',
+      );
+    }
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
