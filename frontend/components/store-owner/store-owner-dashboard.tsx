@@ -1,23 +1,205 @@
-"use client"
-import Link from "next/link"
-import { Store, ArrowRight, ArrowUp, ArrowDown, Tag, Percent } from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { dummyStores, dummyOrders, dummyMenuItems } from "@/lib/dummy-data"
-import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
+'use client';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { dummyMenuItems, dummyOrders, dummyStores } from '@/lib/dummy-data';
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Percent,
+  Store,
+  Tag,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { OrderTypes } from './order-management';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import axios from 'axios';
+import { Check, Clock, Eye, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { Product, StoreDetailsType } from '../admin/admin-dashboard';
 
 // For demo purposes, we'll assume the store owner owns the first store
-const OWNER_STORE = dummyStores[0]
+const OWNER_STORE = dummyStores[0];
 
 // Filter orders for this store owner
 const OWNER_ORDERS = dummyOrders.filter((order) =>
-  order.items.some((item) => item.name.includes(OWNER_STORE.name.split(" ")[0])),
-)
+  order.items.some((item) =>
+    item.name.includes(OWNER_STORE.name.split(' ')[0]),
+  ),
+);
 
 export default function StoreOwnerDashboard() {
-  const totalRevenue = OWNER_ORDERS.reduce((sum, order) => sum + order.total, 0)
-  const pendingOrders = OWNER_ORDERS.filter((order) => order.status === "pending")
+  const [orders, setOrders] = useState<OrderTypes[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [statusFilter] = useState('all');
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
+
+  // const [store_owner_id, setStore_Owner_id] = useState('');
+
+  const store_owner_id = localStorage.getItem('store_owner_id');
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/orders');
+      const filteredOrders = response.data.filter(
+        (order: any) => String(order.store_id) === store_owner_id,
+      );
+      setOrders(filteredOrders);
+      console.log('Fetched orders:', response.data);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/products');
+      console.log(response.data);
+      const filteredProducts = response.data.filter(
+        (product: any) => String(product.storeOwner_id) === store_owner_id,
+      );
+      setProducts(filteredProducts);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  const fetchStoreOwners = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/store-owner');
+      console.log(response.data);
+      setStoreOwners(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
+    }
+  };
+
+  useEffect(() => {
+    Promise.all([fetchProducts(), fetchOrders(), fetchStoreOwners()]);
+  }, []);
+
+  // useEffect(() => {
+  //   const storedId = localStorage.getItem('store_owner_id');
+  //   if (storedId) {
+  //     setStore_Owner_id(storedId);
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   if (store_owner_id) {
+  //     fetchOrders();
+  //   }
+  // }, [store_owner_id]);
+
+  const totalRevenue = OWNER_ORDERS.reduce(
+    (sum, order) => sum + order.total,
+    0,
+  );
+  const pendingOrders = OWNER_ORDERS.filter(
+    (order) => order.status === 'pending',
+  );
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch = order.fullname
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' || order.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleUpdateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      // Optimistically update UI
+      setOrders(
+        orders.map((order) =>
+          order.order_id === orderId ? { ...order, status } : order,
+        ),
+      );
+
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status });
+      }
+
+      // Send update to backend
+      await axios.put(`http://localhost:8800/api/orders/status/₱{orderId}`, {
+        status,
+      });
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      // Optional: Revert UI update or show a toast if needed
+    }
+  };
+
+  const viewOrderDetails = (order: any) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Check className="h-4 w-4 mr-1" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 mr-1" />;
+      case 'cancelled':
+        return <X className="h-4 w-4 mr-1" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'default';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
 
   return (
     <div className="flex h-screen">
@@ -27,11 +209,11 @@ export default function StoreOwnerDashboard() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Store Dashboard</h1>
             <p className="text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
               })}
             </p>
           </div>
@@ -39,11 +221,19 @@ export default function StoreOwnerDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Your Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Your Revenue
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">
+                    ₱
+                    {orders.reduce(
+                      (sum, order) => sum + parseFloat(order.total_price),
+                      0,
+                    )}
+                  </div>
                   <div className="flex items-center text-green-500 text-sm">
                     <ArrowUp className="h-4 w-4 mr-1" />
                     12%
@@ -54,11 +244,13 @@ export default function StoreOwnerDashboard() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Your Orders</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Your Orders
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">{OWNER_ORDERS.length}</div>
+                  <div className="text-2xl font-bold">{orders.length}</div>
                   <div className="flex items-center text-green-500 text-sm">
                     <ArrowUp className="h-4 w-4 mr-1" />
                     8%
@@ -69,11 +261,13 @@ export default function StoreOwnerDashboard() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Products</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Products
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">{dummyMenuItems.length}</div>
+                  <div className="text-2xl font-bold">{products.length}</div>
                   <div className="flex items-center text-green-500 text-sm">
                     <ArrowUp className="h-4 w-4 mr-1" />
                     4%
@@ -84,11 +278,22 @@ export default function StoreOwnerDashboard() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Store Rating</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Store Rating
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">{OWNER_STORE.rating}/5</div>
+                  <div className="text-2xl font-bold">
+                    {
+                      storeOwnersFromDB.find(
+                        (store) =>
+                          String(store.storeOwner_id) ===
+                          String(store_owner_id),
+                      )?.avg_rating
+                    }
+                    /5
+                  </div>
                   <div className="flex items-center text-red-500 text-sm">
                     <ArrowDown className="h-4 w-4 mr-1" />
                     0.2
@@ -98,20 +303,22 @@ export default function StoreOwnerDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col">
             <section className="lg:col-span-1">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold">Quick Actions</h2>
               </div>
 
-              <div className="space-y-4">
-                <Card>
+              <div className="flex  w-full justify-between gap-4">
+                <Card className="w-full h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Tag className="h-5 w-5" />
                       Manage Products
                     </CardTitle>
-                    <CardDescription>Add, edit or remove products from your store</CardDescription>
+                    <CardDescription>
+                      Add, edit or remove products from your store
+                    </CardDescription>
                   </CardHeader>
                   <CardFooter>
                     <Button className="w-full" asChild>
@@ -123,13 +330,15 @@ export default function StoreOwnerDashboard() {
                   </CardFooter>
                 </Card>
 
-                <Card>
+                <Card className="w-full h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Percent className="h-5 w-5" />
                       Promotions
                     </CardTitle>
-                    <CardDescription>Create special offers and discounts</CardDescription>
+                    <CardDescription>
+                      Create special offers and discounts
+                    </CardDescription>
                   </CardHeader>
                   <CardFooter>
                     <Button className="w-full" asChild>
@@ -141,13 +350,15 @@ export default function StoreOwnerDashboard() {
                   </CardFooter>
                 </Card>
 
-                <Card>
+                <Card className="w-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Store className="h-5 w-5" />
                       Store Profile
                     </CardTitle>
-                    <CardDescription>Update your store information and settings</CardDescription>
+                    <CardDescription>
+                      Update your store information and settings
+                    </CardDescription>
                   </CardHeader>
                   <CardFooter>
                     <Button className="w-full" asChild>
@@ -161,7 +372,7 @@ export default function StoreOwnerDashboard() {
               </div>
             </section>
 
-            <section className="lg:col-span-2">
+            <section className="lg:col-span-2 mt-[2rem]">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold">Recent Orders</h2>
                 <Button variant="ghost" asChild>
@@ -173,36 +384,104 @@ export default function StoreOwnerDashboard() {
               </div>
 
               <div className="space-y-4">
-                {pendingOrders.length > 0 ? (
-                  pendingOrders.map((order) => (
-                    <Card key={order.id}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between">
-                          <CardTitle className="text-base">Order #{order.id.slice(0, 8)}</CardTitle>
-                          <Badge variant="warning">Pending</Badge>
-                        </div>
-                        <CardDescription>
-                          {order.date} - {order.customer}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-2">
-                        <div className="space-y-1">
-                          {order.items.map((item, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>
-                                {item.quantity}x {item.name}
-                              </span>
-                              <span>${(item.price * item.quantity).toFixed(2)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <span className="font-medium">Total</span>
-                        <span className="font-bold">${order.total.toFixed(2)}</span>
-                      </CardFooter>
-                    </Card>
-                  ))
+                {filteredOrders.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Order ID</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Items</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredOrders.length > 0 ? (
+                            filteredOrders
+                              .map((order) => (
+                                <TableRow key={order.order_id}>
+                                  <TableCell className="font-medium">
+                                    {order.order_id}
+                                  </TableCell>
+                                  <TableCell>{order.fullname}</TableCell>
+                                  <TableCell>
+                                    {order.items.length} items
+                                  </TableCell>
+                                  <TableCell>
+                                    ₱{Number(order.total_price).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell>
+                                    {formatDate(order.created_at)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant={getStatusVariant(order.status)}
+                                      className="flex w-fit items-center"
+                                    >
+                                      {getStatusIcon(order.status)}
+                                      {order.status.charAt(0).toUpperCase() +
+                                        order.status.slice(1)}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => viewOrderDetails(order)}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                      <Select
+                                        value={order.status}
+                                        onValueChange={(value) =>
+                                          handleUpdateOrderStatus(
+                                            order.order_id,
+                                            value,
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger className="w-[130px]">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">
+                                            Pending
+                                          </SelectItem>
+                                          <SelectItem value="processing">
+                                            Processing
+                                          </SelectItem>
+                                          <SelectItem value="completed">
+                                            Completed
+                                          </SelectItem>
+                                          <SelectItem value="cancelled">
+                                            Cancelled
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                              .slice(0, 5)
+                          ) : (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="text-center py-6 text-muted-foreground"
+                              >
+                                No orders found matching your criteria
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
                 ) : (
                   <Card>
                     <CardContent className="p-6 text-center text-muted-foreground">
@@ -216,6 +495,5 @@ export default function StoreOwnerDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -7,6 +7,8 @@ const router = Router();
 router.post('/create', async (req: Request, res: Response): Promise<void> => {
   const { rating, reviewText, user_id, product_id, fullname } = req.body;
 
+  // console.log('Received data:', req.body); // Log the received data
+
   if (rating == null || !reviewText || !user_id || !product_id || !fullname) {
     res.status(400).json({ error: 'Missing required fields' });
     return;
@@ -68,8 +70,6 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
       ORDER BY storeName, customerName;
 
       `;
-
-    console.log(sqlQuery);
 
     const [data]: any = await connection.query(sqlQuery);
 

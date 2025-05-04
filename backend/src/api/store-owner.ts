@@ -100,6 +100,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
         products.inventory AS product_inventory,
         products.created_at AS product_created_at,
         products.product_image AS product_image,
+        
 
         promotions.promotion_id AS promotion_id,
         promotions.title AS promotion_title,

@@ -23,6 +23,11 @@ export default function StoreOwnerSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const customerDetails =
+    typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('store_owner_details') || '{}')
+      : {};
+
   const isActive = (path: string) => {
     return pathname === path;
   };
@@ -113,8 +118,10 @@ export default function StoreOwnerSidebar() {
             <AvatarFallback>SO</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium">Store Owner</p>
-            <p className="text-xs text-muted-foreground">Cafe Delight</p>
+            <p className="text-sm font-medium">{customerDetails.ownerName}</p>
+            <p className="text-xs text-muted-foreground">
+              {customerDetails.storeName}
+            </p>
           </div>
           <Button
             variant="ghost"

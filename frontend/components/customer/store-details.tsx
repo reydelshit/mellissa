@@ -18,6 +18,7 @@ import { Clock, Heart, ShoppingCart, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Promotion, StoreDetailsType } from '../admin/admin-dashboard';
+import { OrderTypes } from '../store-owner/order-management';
 
 interface ReviewType {
   productName: string;
@@ -55,7 +56,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
   const fetchStoreOwners = async () => {
     try {
       const response = await axios.get('http://localhost:8800/api/store-owner');
-      console.log(response.data);
+      console.log('store', response.data);
       setStoreOwners(response.data);
     } catch (error) {
       console.error('Error fetching store owners:', error);
@@ -99,23 +100,27 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
     }
   };
 
-  const addToCart = (item: any) => {
+  const addToCart = (store: StoreDetailsType, item: any) => {
+    console.log('Adding to cart:', store.products);
+
     setCart((prevCart) => {
-      // Check if the item already exists in the cart
       const existingItem = prevCart.find(
         (cartItem) => cartItem.product_id === item.product_id,
       );
 
       if (existingItem) {
-        // If the item exists, update its quantity
+        // Update quantity if item exists
         return prevCart.map((cartItem) =>
           cartItem.product_id === item.product_id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem,
         );
       } else {
-        // If the item doesn't exist, add it with quantity 1
-        return [...prevCart, { ...item, quantity: 1 }];
+        // Add new item with quantity and store_id
+        return [
+          ...prevCart,
+          { ...item, quantity: 1, store_id: store.storeOwner_id },
+        ];
       }
     });
 
@@ -307,7 +312,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                                   {item.product_name}
                                 </CardTitle>
                                 <CardDescription className="text-lg font-medium text-primary">
-                                  ${item.price.toFixed(2)}
+                                  ₱{item.price.toFixed(2)}
                                 </CardDescription>
                               </div>
                             </CardHeader>
@@ -322,7 +327,7 @@ export default function StoreDetails({ storeId }: { storeId: string }) {
                               <Button
                                 variant="default"
                                 className="w-full bg-primary hover:bg-primary/90 text-white rounded-full py-2 transition-all duration-200 shadow-sm hover:shadow group-hover:scale-[1.02]"
-                                onClick={() => addToCart(item)}
+                                onClick={() => addToCart(store, item)}
                               >
                                 <ShoppingCart className="h-4 w-4 mr-2" />
                                 Add to Cart

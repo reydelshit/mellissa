@@ -12,7 +12,8 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     fullname,
     delivery_address,
     payment_method,
-    items, // Array of { product_id, quantity, price }
+    items,
+    store_id,
   } = req.body;
 
   if (
@@ -22,6 +23,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     !fullname ||
     !delivery_address ||
     !payment_method ||
+    !store_id ||
     !Array.isArray(items) ||
     items.length === 0
   ) {
@@ -36,8 +38,8 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
     await connection.beginTransaction();
 
     const [orderResult]: any = await connection.query(
-      `INSERT INTO orders ( user_id, total_price, status, created_at, fullname, delivery_address, payment_method)
-       VALUES (?, ?, ?, NOW(), ?, ?, ?)`,
+      `INSERT INTO orders ( user_id, total_price, status, created_at, fullname, delivery_address, payment_method, store_id)
+       VALUES (?, ?, ?, NOW(), ?, ?, ?, ?) `,
       [
         user_id,
         total_price,
@@ -45,6 +47,7 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
         fullname,
         delivery_address,
         payment_method,
+        store_id,
       ],
     );
 

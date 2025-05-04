@@ -81,7 +81,6 @@ export default function ProductsManagement() {
 
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-
   const [productID, setProductID] = useState<number | null>(null);
 
   const storeOwnerID = localStorage.getItem('store_owner_id') || '';
@@ -282,7 +281,7 @@ export default function ProductsManagement() {
                           </h3>
                           <div className="flex items-baseline mt-1">
                             <span className="text-lg font-semibold text-gray-900">
-                              ${product.price.toFixed(2)}
+                              ₱{product.price.toFixed(2)}
                             </span>
                           </div>
                         </div>

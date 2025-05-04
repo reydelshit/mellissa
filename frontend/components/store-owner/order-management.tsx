@@ -34,7 +34,7 @@ import { dummyOrders } from '@/lib/dummy-data';
 import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
 import axios from 'axios';
 
-type OrderTypes = {
+export type OrderTypes = {
   order_id: string;
   user_id: string;
   total_price: string;
@@ -53,14 +53,19 @@ type OrderTypes = {
 export default function OrderManagement() {
   const [orders, setOrders] = useState<OrderTypes[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState(null as OrderTypes | null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const fetchPromotions = async () => {
+  const store_owner_id = localStorage.getItem('store_owner_id');
+
+  const fetchOrders = async () => {
     try {
       const response = await axios.get('http://localhost:8800/api/orders');
-      setOrders(response.data);
+      const filteredOrders = response.data.filter(
+        (order: any) => String(order.store_id) === store_owner_id,
+      );
+      setOrders(filteredOrders);
       console.log('Fetched orders:', response.data);
     } catch (error) {
       console.error('Error fetching promotions:', error);
@@ -68,9 +73,8 @@ export default function OrderManagement() {
   };
 
   useEffect(() => {
-    Promise.all([fetchPromotions()]);
+    fetchOrders();
   }, []);
-
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = order.fullname
       .toLowerCase()
@@ -91,21 +95,21 @@ export default function OrderManagement() {
         ),
       );
 
-      if (selectedOrder && selectedOrder.id === orderId) {
+      if (selectedOrder && selectedOrder.order_id === orderId) {
         setSelectedOrder({ ...selectedOrder, status });
       }
 
       // Send update to backend
-      await axios.put(`http://localhost:8800/api/orders/status/${orderId}`, {
+      await axios.put(`http://localhost:8800/api/orders/status/₱{orderId}`, {
         status,
       });
     } catch (error) {
       console.error('Failed to update order status:', error);
-      // Optional: Revert UI update or show a toast if needed
     }
   };
 
-  const viewOrderDetails = (order: any) => {
+  const viewOrderDetails = (order: OrderTypes) => {
+    console.log('Selected order:', order);
     setSelectedOrder(order);
     setShowOrderDetails(true);
   };
@@ -222,7 +226,7 @@ export default function OrderManagement() {
                             <TableCell>{order.fullname}</TableCell>
                             <TableCell>{order.items.length} items</TableCell>
                             <TableCell>
-                              ${Number(order.total_price).toFixed(2)}
+                              ₱{Number(order.total_price).toFixed(2)}
                             </TableCell>
                             <TableCell>{order.created_at}</TableCell>
                             <TableCell>
@@ -319,7 +323,7 @@ export default function OrderManagement() {
                               <TableCell>{order.items.length} items</TableCell>
                               <TableCell>
                                 {' '}
-                                ${Number(order.total_price).toFixed(2)}
+                                ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
                               <TableCell>{order.created_at}</TableCell>
                               <TableCell>
@@ -421,7 +425,7 @@ export default function OrderManagement() {
                               <TableCell>{order.items.length} items</TableCell>
                               <TableCell>
                                 {' '}
-                                ${Number(order.total_price).toFixed(2)}
+                                ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
                               <TableCell>{order.created_at}</TableCell>
                               <TableCell>
@@ -479,7 +483,7 @@ export default function OrderManagement() {
                               <TableCell>{order.items.length} items</TableCell>
                               <TableCell>
                                 {' '}
-                                ${Number(order.total_price).toFixed(2)}
+                                ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
                               <TableCell>{order.created_at}</TableCell>
                               <TableCell>
@@ -515,7 +519,7 @@ export default function OrderManagement() {
               <DialogHeader>
                 <DialogTitle>Order Details</DialogTitle>
                 <DialogDescription>
-                  Order #{selectedOrder?.id} - {selectedOrder?.date}
+                  Order #{selectedOrder?.order_id} - {selectedOrder?.created_at}
                 </DialogDescription>
               </DialogHeader>
 
@@ -537,7 +541,7 @@ export default function OrderManagement() {
                     <Select
                       value={selectedOrder.status}
                       onValueChange={(value) =>
-                        handleUpdateOrderStatus(selectedOrder.id, value)
+                        handleUpdateOrderStatus(selectedOrder.order_id, value)
                       }
                     >
                       <SelectTrigger className="w-[150px]">
@@ -555,21 +559,14 @@ export default function OrderManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h3 className="font-medium mb-2">Customer Information</h3>
-                      <p className="text-sm">Name: {selectedOrder.customer}</p>
-                      <p className="text-sm">
-                        Email:{' '}
-                        {selectedOrder.customer
-                          .toLowerCase()
-                          .replace(/\s/g, '')}
-                        @example.com
-                      </p>
-                      <p className="text-sm">Phone: (555) 123-4567</p>
+                      <p className="text-sm">Name: {selectedOrder.fullname}</p>
+                      <p className="text-sm">Email: 'N/A'</p>
                     </div>
 
                     <div>
                       <h3 className="font-medium mb-2">Delivery Information</h3>
                       <p className="text-sm">
-                        Address: 123 Main St, Anytown, USA
+                        Address: {selectedOrder.delivery_address || 'N/A'}
                       </p>
                       <p className="text-sm">Delivery Method: Standard</p>
                       <p className="text-sm">
@@ -594,9 +591,11 @@ export default function OrderManagement() {
                           <TableRow key={index}>
                             <TableCell>{item.name}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>${item.price.toFixed(2)}</TableCell>
                             <TableCell>
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ₱{Number(item.price).toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₱{(item.price * item.quantity).toFixed(2)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -607,25 +606,24 @@ export default function OrderManagement() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
-                      <span>${selectedOrder.total.toFixed(2)}</span>
+                      <span>
+                        ₱{Number(selectedOrder.total_price).toFixed(2)}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    {/* <div className="flex justify-between text-sm">
                       <span>Delivery Fee</span>
-                      <span>$2.99</span>
-                    </div>
+                      <span>₱2.99</span>
+                    </div> */}
                     <div className="flex justify-between text-sm">
                       <span>Tax</span>
-                      <span>${(selectedOrder.total * 0.08).toFixed(2)}</span>
+                      <span>
+                        ₱{(Number(selectedOrder.total_price) * 0.08).toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
                       <span>
-                        $
-                        {(
-                          selectedOrder.total +
-                          2.99 +
-                          selectedOrder.total * 0.08
-                        ).toFixed(2)}
+                        ₱{Number(selectedOrder.total_price).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -644,7 +642,10 @@ export default function OrderManagement() {
                   <Button
                     variant={'default'}
                     onClick={() => {
-                      handleUpdateOrderStatus(selectedOrder.id, 'completed');
+                      handleUpdateOrderStatus(
+                        selectedOrder.order_id,
+                        'completed',
+                      );
                       setShowOrderDetails(false);
                     }}
                   >

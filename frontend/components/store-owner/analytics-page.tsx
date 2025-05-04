@@ -1,19 +1,39 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { BarChart3, LineChart, PieChart, Download, Calendar } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { dummyOrders, dummyReviews } from "@/lib/dummy-data"
-import StoreOwnerSidebar from "@/components/store-owner/store-owner-sidebar"
+import { useState } from 'react';
+import {
+  BarChart3,
+  LineChart,
+  PieChart,
+  Download,
+  Calendar,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { dummyOrders, dummyReviews } from '@/lib/dummy-data';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("week")
+  const [timeRange, setTimeRange] = useState('week');
 
-  const totalRevenue = dummyOrders.reduce((sum, order) => sum + order.total, 0)
-  const averageRating = dummyReviews.reduce((sum, review) => sum + review.rating, 0) / dummyReviews.length
+  const totalRevenue = dummyOrders.reduce((sum, order) => sum + order.total, 0);
+  const averageRating =
+    dummyReviews.reduce((sum, review) => sum + review.rating, 0) /
+    dummyReviews.length;
 
   return (
     <div className="flex h-screen">
@@ -23,7 +43,9 @@ export default function AnalyticsPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold mb-2">Analytics & Reporting</h1>
-              <p className="text-muted-foreground">View insights and export data for your stores</p>
+              <p className="text-muted-foreground">
+                View insights and export data for your stores
+              </p>
             </div>
 
             <div className="flex gap-2">
@@ -54,41 +76,63 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Revenue
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground mt-1">+12% from last {timeRange}</p>
+                <div className="text-2xl font-bold">
+                  ₱{totalRevenue.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +12% from last {timeRange}
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Orders
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dummyOrders.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">+8% from last {timeRange}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +8% from last {timeRange}
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Average Order Value</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Average Order Value
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${(totalRevenue / dummyOrders.length).toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground mt-1">+4% from last {timeRange}</p>
+                <div className="text-2xl font-bold">
+                  ₱{(totalRevenue / dummyOrders.length).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +4% from last {timeRange}
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Customer Satisfaction</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Customer Satisfaction
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{averageRating.toFixed(1)}/5</div>
-                <p className="text-xs text-muted-foreground mt-1">-0.2 from last {timeRange}</p>
+                <div className="text-2xl font-bold">
+                  {averageRating.toFixed(1)}/5
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  -0.2 from last {timeRange}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -105,13 +149,17 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Sales Overview</CardTitle>
-                  <CardDescription>Sales data for the selected time period</CardDescription>
+                  <CardDescription>
+                    Sales data for the selected time period
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
                     <div className="text-center">
                       <LineChart className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">Sales chart visualization would appear here</p>
+                      <p className="text-muted-foreground mt-2">
+                        Sales chart visualization would appear here
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -122,13 +170,17 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Order Analytics</CardTitle>
-                  <CardDescription>Order data for the selected time period</CardDescription>
+                  <CardDescription>
+                    Order data for the selected time period
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
                     <div className="text-center">
                       <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">Order analytics visualization would appear here</p>
+                      <p className="text-muted-foreground mt-2">
+                        Order analytics visualization would appear here
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -139,13 +191,17 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Customer Insights</CardTitle>
-                  <CardDescription>Customer data for the selected time period</CardDescription>
+                  <CardDescription>
+                    Customer data for the selected time period
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
                     <div className="text-center">
                       <PieChart className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">Customer insights visualization would appear here</p>
+                      <p className="text-muted-foreground mt-2">
+                        Customer insights visualization would appear here
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -156,13 +212,17 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Review Analysis</CardTitle>
-                  <CardDescription>Review data for the selected time period</CardDescription>
+                  <CardDescription>
+                    Review data for the selected time period
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
                     <div className="text-center">
                       <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">Review analysis visualization would appear here</p>
+                      <p className="text-muted-foreground mt-2">
+                        Review analysis visualization would appear here
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -172,6 +232,5 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

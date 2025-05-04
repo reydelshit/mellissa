@@ -60,6 +60,7 @@ export interface Product {
   inventory: number;
   created_at: string;
   product_image: string;
+  storeOwner_id: number;
 }
 
 export interface Promotion {

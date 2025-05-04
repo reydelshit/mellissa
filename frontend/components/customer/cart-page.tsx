@@ -35,6 +35,7 @@ type CartItem = {
   price: number;
   quantity: number;
   product_image: string;
+  store_id: string;
 };
 
 export default function CartPage() {
@@ -120,7 +121,7 @@ export default function CartPage() {
     try {
       const res = await axios.post('http://localhost:8800/api/orders/create', {
         user_id,
-        total_price: (cartTotal + 2.99 + cartTotal * 0.08).toFixed(2), // example: subtotal + fee + tax
+        total_price: cartTotal,
         status: 'pending',
         fullname: fullName,
         delivery_address: address,
@@ -130,6 +131,7 @@ export default function CartPage() {
           quantity: item.quantity,
           price: item.price,
         })),
+        store_id: cart[0].store_id,
       });
 
       console.log(res.data);
@@ -182,7 +184,7 @@ export default function CartPage() {
                           <div>
                             <h3 className="font-medium">{item.product_name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              ${item.price.toFixed(2)}
+                              ₱{item.price.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -229,7 +231,7 @@ export default function CartPage() {
                           </div>
 
                           <div className="w-20 text-right font-medium">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ₱{(item.price * item.quantity).toFixed(2)}
                           </div>
 
                           <Button
@@ -254,21 +256,21 @@ export default function CartPage() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
-                      <span>${cartTotal.toFixed(2)}</span>
+                      <span>₱{cartTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Delivery Fee</span>
-                      <span>$2.99</span>
+                      <span>₱2.99</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Tax</span>
-                      <span>${(cartTotal * 0.08).toFixed(2)}</span>
+                      <span>₱{(cartTotal * 0.08).toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
                       <span>
-                        ${(cartTotal + 2.99 + cartTotal * 0.08).toFixed(2)}
+                        ₱{(cartTotal + 2.99 + cartTotal * 0.08).toFixed(2)}
                       </span>
                     </div>
                   </CardContent>
@@ -353,20 +355,20 @@ export default function CartPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${cartTotal.toFixed(2)}</span>
+                      <span>₱{cartTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
-                      <span>$2.99</span>
+                      <span>₱2.99</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax</span>
-                      <span>${(cartTotal * 0.08).toFixed(2)}</span>
+                      <span>₱{(cartTotal * 0.08).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
                       <span>
-                        ${(cartTotal + 2.99 + cartTotal * 0.08).toFixed(2)}
+                        ₱{(cartTotal + 2.99 + cartTotal * 0.08).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -412,6 +414,17 @@ export default function CartPage() {
                       />
                     </Button>
                   ))}
+                </div>
+
+                {/* Review Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="review-name">Your Name</Label>
+                  <Input
+                    id="review-name"
+                    placeholder="John Doe"
+                    value={reviewName}
+                    onChange={(e) => setReviewName(e.target.value)}
+                  />
                 </div>
 
                 {/* Review Text */}
