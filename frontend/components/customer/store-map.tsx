@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
 import { stallsGround, stallsSecond } from '@/lib/data';
 import DEFDEFSEC from '@/lib/DEFDEFSEC';
 import PathContainer from '@/lib/PathContainer';
@@ -36,6 +35,8 @@ import {
   useControls,
 } from 'react-zoom-pan-pinch';
 import { StoreDetailsType } from '../admin/admin-dashboard';
+import { toast } from 'sonner';
+import { StoreFavorites } from './favorites-page';
 
 const Controls = ({
   showSecondFloor,
@@ -81,19 +82,25 @@ const Controls = ({
 
 export default function StoreMap() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<StoreFavorites[]>([]);
 
   const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
 
   const [showSecondFloor, setShowSecondFloor] = useState(false);
   const [selectedStalls, setSelectedStalls] = useState('');
   const [showModal, setShowModal] = useState(false);
-
+  const [hoveredStallId, setHoveredStallId] = useState<string | null>(null);
   const [stallDetails, setStallDetails] = useState({
     stall_no: '',
     floor: '',
     size: '',
   });
+  const [user_id, setUser_id] = useState('');
+
+  const [viewStallDetails, setViewStallDetails] = useState(
+    {} as StoreDetailsType,
+  );
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const filteredStores = storeOwnersFromDB.filter(
     (store) =>
@@ -101,31 +108,85 @@ export default function StoreMap() {
       store.location.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const [hoveredStallId, setHoveredStallId] = useState<string | null>(null);
+  const fetchFavorites = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/favorites');
 
-  const toggleFavorite = (e: React.MouseEvent, storeId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
+      console.log('Fetched favorites:', response.data);
 
-    if (favorites.includes(storeId)) {
-      setFavorites(favorites.filter((id) => id !== storeId));
-      toast({
-        title: 'Removed from favorites',
-        description: 'This store has been removed from your favorites.',
-      });
-    } else {
-      setFavorites([...favorites, storeId]);
-      toast({
-        title: 'Added to favorites',
-        description: 'This store has been added to your favorites.',
-      });
+      console.log(response.data);
+      setFavorites(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
     }
   };
 
-  const [viewStallDetails, setViewStallDetails] = useState(
-    {} as StoreDetailsType,
-  );
-  const [selectedImage, setSelectedImage] = useState(0);
+  useEffect(() => {
+    const storedId = localStorage.getItem('user_id');
+    if (storedId) {
+      setUser_id(storedId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user_id) {
+      fetchFavorites();
+    }
+  }, [user_id]);
+
+  const toggleFavorite = async (e: React.MouseEvent, storeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Get user_id from localStorage
+    const user_id = localStorage.getItem('user_id');
+    if (!user_id) {
+      toast('Error', {
+        description: 'You need to be logged in to favorite stores.',
+      });
+      return;
+    }
+
+    // Check if the store is already favorited
+    const isFavorited = favorites.some(
+      (favorite) => favorite && String(favorite.store_id) === String(storeId),
+    );
+
+    try {
+      if (isFavorited) {
+        // If store is already in favorites, delete it
+        await axios.delete('http://localhost:8800/api/favorites', {
+          data: { user_id, store_id: storeId },
+        });
+
+        // Update the local state after deletion
+        setFavorites((prevFavorites) =>
+          prevFavorites.filter(
+            (favorite) => String(favorite.store_id) !== String(storeId),
+          ),
+        );
+        toast('Removed from favorites', {
+          description: 'This store has been removed from your favorites.',
+        });
+      } else {
+        // Add store to favorites
+        await axios.post('http://localhost:8800/api/favorites/create', {
+          user_id,
+          store_id: storeId,
+        });
+
+        fetchFavorites();
+        toast('Added to favorites', {
+          description: 'This store has been added to your favorites.',
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast('Error', {
+        description: 'There was a problem updating your favorites.',
+      });
+    }
+  };
 
   const fetchStoreOwners = async () => {
     try {
@@ -375,7 +436,12 @@ export default function StoreMap() {
                           >
                             <Heart
                               className={`h-5 w-5 ${
-                                favorites.includes(String(store.storeOwner_id))
+                                favorites.some(
+                                  (fav) =>
+                                    fav &&
+                                    String(fav.store_id) ===
+                                      String(store.storeOwner_id), // Ensure comparison is correct
+                                )
                                   ? 'fill-red-500 text-red-500'
                                   : ''
                               }`}

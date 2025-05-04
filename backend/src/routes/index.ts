@@ -7,6 +7,7 @@ import { storeOwnerRouter } from '../api/store-owner';
 import { cartsRouter } from '../api/carts';
 import { ordersRouter } from '../api/order';
 import { orderItemsRouter } from '../api/orderItems';
+import { favoritesRouter } from '../api/favorites';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/promotions', promotionRouter);
 router.use('/carts', cartsRouter);
 router.use('/orders', ordersRouter);
 router.use('/order-items', orderItemsRouter);
+router.use('/favorites', favoritesRouter);
 
 export default router;
