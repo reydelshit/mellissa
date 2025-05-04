@@ -317,10 +317,10 @@ export default function AdminDashboard() {
             value={activeTab}
             onValueChange={setActiveTab}
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList>
               <TabsTrigger value="map">Mall Map</TabsTrigger>
               <TabsTrigger value="store-owners">Store Owners</TabsTrigger>
-              <TabsTrigger value="customers">Customers</TabsTrigger>
+              {/* <TabsTrigger value="customers">Customers</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="map" className="pt-4 relative">
@@ -574,7 +574,7 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="customers" className="pt-4">
+            {/* <TabsContent value="customers" className="pt-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div>
@@ -614,8 +614,7 @@ export default function AdminDashboard() {
                           <div className="text-sm text-muted-foreground">
                             {customer.email}
                           </div>
-                          {/* <div>{customer.orders}</div>
-                          <div>{customer.lastOrder}</div> */}
+              
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm">
                               View Details
@@ -638,7 +637,7 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </div>
       </div>
