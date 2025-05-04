@@ -36,6 +36,7 @@ import axios from 'axios';
 import { usePathname } from 'next/navigation';
 import path from 'path';
 import CustomerSidebar from '../customer/customer-sidebar';
+import { formatDate } from '@/lib/formatDate';
 
 export type OrderTypes = {
   order_id: string;
@@ -252,7 +253,9 @@ export default function OrderManagement() {
                             <TableCell>
                               ₱{Number(order.total_price).toFixed(2)}
                             </TableCell>
-                            <TableCell>{order.created_at}</TableCell>
+                            <TableCell>
+                              {formatDate(order.created_at)}
+                            </TableCell>
                             <TableCell>
                               <Badge
                                 variant={getStatusVariant(order.status)}
@@ -351,7 +354,9 @@ export default function OrderManagement() {
                                 {' '}
                                 ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
-                              <TableCell>{order.created_at}</TableCell>
+                              <TableCell>
+                                {formatDate(order.created_at)}
+                              </TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
                                   <Button
@@ -456,7 +461,9 @@ export default function OrderManagement() {
                                 {' '}
                                 ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
-                              <TableCell>{order.created_at}</TableCell>
+                              <TableCell>
+                                {formatDate(order.created_at)}
+                              </TableCell>
                               <TableCell>
                                 <Button
                                   variant="ghost"
@@ -514,7 +521,9 @@ export default function OrderManagement() {
                                 {' '}
                                 ₱{Number(order.total_price).toFixed(2)}
                               </TableCell>
-                              <TableCell>{order.created_at}</TableCell>
+                              <TableCell>
+                                {formatDate(order.created_at)}
+                              </TableCell>
                               <TableCell>
                                 <Button
                                   variant="ghost"

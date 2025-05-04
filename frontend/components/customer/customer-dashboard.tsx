@@ -19,6 +19,7 @@ import { StoreFavorites } from './favorites-page';
 import axios from 'axios';
 import { OrderTypes } from '../store-owner/order-management';
 import { StoreDetailsType } from '../admin/admin-dashboard';
+import { formatDate } from '@/lib/formatDate';
 
 export default function CustomerDashboard() {
   const [recentOrders, setRecentOrders] = useState(dummyOrders.slice(0, 3));
@@ -219,7 +220,7 @@ export default function CustomerDashboard() {
                       </CardFooter>
                     </Card>
                   ))
-                  .slice(0, 3)}
+                  .slice(0, 5)}
               </div>
             </section>
 
@@ -256,7 +257,9 @@ export default function CustomerDashboard() {
                               order.status.slice(1)}
                           </Badge>
                         </div>
-                        <CardDescription>{order.created_at}</CardDescription>
+                        <CardDescription>
+                          {formatDate(order.created_at)}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-2">
                         <div className="space-y-1">
@@ -269,7 +272,7 @@ export default function CustomerDashboard() {
                                 {item.quantity}x {item.product_name}
                               </span>
                               <span>
-                                ${(item.price * item.quantity).toFixed(2)}
+                                ₱{(item.price * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           ))}
