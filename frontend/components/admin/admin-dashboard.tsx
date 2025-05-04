@@ -92,6 +92,7 @@ export interface StoreDetailsType {
   promotions: Promotion[];
   avg_rating: string;
   review_count: number;
+  status: string;
 }
 
 type CustomerType = {
@@ -165,6 +166,8 @@ export default function AdminDashboard() {
   const [showSecondFloor, setShowSecondFloor] = useState(false);
   const [selectedStalls, setSelectedStalls] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState(false);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<number | null>(null);
 
   const [stallDetails, setStallDetails] = useState({
     stall_no: '',
@@ -196,6 +199,33 @@ export default function AdminDashboard() {
       setCustomers(response.data);
     } catch (error) {
       console.error('Error fetching customers:', error);
+    }
+  };
+  const handleDeactivate = async (id: number, status: string) => {
+    console.log('Selected Owner ID:', id);
+    console.log('Selected Status:', status);
+    try {
+      await axios.put(`http://localhost:8800/api/store-owner/${id}/status`, {
+        status: status,
+      });
+
+      console.log('Status updated successfully');
+
+      if (status === 'Active') {
+        toast('Store owner activated successfully!');
+      } else {
+        toast('Store owner deactivated successfully!');
+      }
+
+      setStoreOwners((prev) =>
+        prev.map((owner) =>
+          owner.storeOwner_id === id ? { ...owner, status: 'Inactive' } : owner,
+        ),
+      );
+
+      fetchStoreOwners();
+    } catch (error) {
+      console.error('Failed to update status:', error);
     }
   };
 
@@ -548,18 +578,37 @@ export default function AdminDashboard() {
                             {owner.email}
                           </div>
                           <div>
-                            <Badge variant="success">Active</Badge>
+                            <Badge
+                              variant={
+                                owner.status === 'Active'
+                                  ? 'default'
+                                  : 'destructive'
+                              }
+                            >
+                              {owner.status}
+                            </Badge>
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            {/* <Button variant="outline" size="sm">
                               Edit
-                            </Button>
+                            </Button> */}
                             <Button
+                              onClick={() => {
+                                setSelectedOwnerId(owner.storeOwner_id);
+                                handleDeactivate(
+                                  owner.storeOwner_id,
+                                  owner.status === 'Active'
+                                    ? 'Inactive'
+                                    : 'Active',
+                                );
+                              }}
                               variant="outline"
                               size="sm"
                               className="text-destructive"
                             >
-                              Deactivate
+                              {owner.status === 'Active'
+                                ? 'Deactivate'
+                                : 'Activate'}
                             </Button>
                           </div>
                         </div>

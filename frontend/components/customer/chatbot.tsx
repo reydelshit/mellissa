@@ -34,9 +34,7 @@ const botResponses = [
 ];
 
 export const getResponse = async (userMessage: string): Promise<string> => {
-  const apiToken =
-    process.env.NEXT_PUBLIC_HF_API_TOKEN ||
-    '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'; // Use env variable
+  const apiToken = process.env.NEXT_PUBLIC_HF_API_TOKEN;
   const apiUrl =
     'https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1'; // Correct model URL
 

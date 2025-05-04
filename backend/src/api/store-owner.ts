@@ -332,4 +332,23 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+router.put('/:id/status', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const connection = await databaseConnectionPromise;
+    await connection.query(
+      'UPDATE store_owner SET status = ? WHERE storeOwner_id = ?',
+      [status, id],
+    );
+    res.json({ message: 'store owner status updated successfully.' });
+  } catch (error) {
+    console.error('Update store owner status error:', error);
+    res
+      .status(500)
+      .json({ error: 'Failed to update order status', details: error });
+  }
+});
+
 export const storeOwnerRouter = router;

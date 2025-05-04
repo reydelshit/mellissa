@@ -152,7 +152,7 @@ export default function StoreOwnerDashboard() {
       }
 
       // Send update to backend
-      await axios.put(`http://localhost:8800/api/orders/status/₱{orderId}`, {
+      await axios.put(`http://localhost:8800/api/orders/status/${orderId}`, {
         status,
       });
     } catch (error) {
