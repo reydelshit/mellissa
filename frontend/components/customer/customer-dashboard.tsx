@@ -26,10 +26,19 @@ export default function CustomerDashboard() {
   const [orders, setOrders] = useState<OrderTypes[]>([]);
   const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
 
-  const customerDetails = JSON.parse(
-    localStorage.getItem('customer_details') || '{}',
-  );
+  interface CustomerDetails {
+    fullname?: string;
+    [key: string]: any;
+  }
 
+  const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({});
+
+  useEffect(() => {
+    const storedData = localStorage.getItem('customer_details');
+    if (storedData) {
+      setCustomerDetails(JSON.parse(storedData));
+    }
+  }, []);
   const [favorites, setFavorites] = useState<StoreFavorites[]>([]);
   const [user_id, setUser_id] = useState('');
 
@@ -217,60 +226,64 @@ export default function CustomerDashboard() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold">Recent Orders</h2>
-                <Button variant="ghost">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Button variant="ghost" asChild>
+                  <Link href="/customer/orders">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
 
               <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <Card key={order.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between">
-                        <CardTitle className="text-base">
-                          Order #{order.id.slice(0, 8)}
-                        </CardTitle>
-                        <Badge
-                          variant={
-                            order.status === 'completed'
-                              ? 'success'
-                              : order.status === 'pending'
-                              ? 'warning'
-                              : 'default'
-                          }
-                        >
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1)}
-                        </Badge>
-                      </div>
-                      <CardDescription>{order.date}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="space-y-1">
-                        {order.items.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between text-sm"
+                {orders
+                  .map((order) => (
+                    <Card key={order.order_id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between">
+                          <CardTitle className="text-base">
+                            Order #{order.order_id}
+                          </CardTitle>
+                          <Badge
+                            variant={
+                              order.status === 'completed'
+                                ? 'success'
+                                : order.status === 'pending'
+                                ? 'warning'
+                                : 'default'
+                            }
                           >
-                            <span>
-                              {item.quantity}x {item.name}
-                            </span>
-                            <span>
-                              ${(item.price * item.quantity).toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                      <span className="font-medium">Total</span>
-                      <span className="font-bold">
-                        ${order.total.toFixed(2)}
-                      </span>
-                    </CardFooter>
-                  </Card>
-                ))}
+                            {order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <CardDescription>{order.created_at}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="space-y-1">
+                          {order.items.map((item, index) => (
+                            <div
+                              key={index}
+                              className="flex justify-between text-sm"
+                            >
+                              <span>
+                                {item.quantity}x {item.product_name}
+                              </span>
+                              <span>
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <span className="font-medium">Total</span>
+                        <span className="font-bold">
+                          ₱{Number(order.total_price).toFixed(2)}
+                        </span>
+                      </CardFooter>
+                    </Card>
+                  ))
+                  .slice(0, 5)}
               </div>
             </section>
           </div>

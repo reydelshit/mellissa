@@ -50,6 +50,7 @@ export type OrderTypes = {
     product_id: string;
     quantity: number;
     price: number;
+    product_name: string;
   }>;
 };
 
@@ -619,7 +620,7 @@ export default function OrderManagement() {
                       <TableBody>
                         {selectedOrder.items.map((item: any, index: number) => (
                           <TableRow key={index}>
-                            <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.product_name}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>
                               ₱{Number(item.price).toFixed(2)}

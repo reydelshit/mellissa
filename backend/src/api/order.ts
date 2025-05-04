@@ -112,7 +112,9 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const [orders]: any = await connection.query('SELECT * FROM orders');
 
     // Fetch all order items
-    const [items]: any = await connection.query('SELECT * FROM order_items');
+    const [items]: any = await connection.query(
+      'SELECT order_items.*, products.product_name FROM order_items LEFT JOIN products ON products.product_id = order_items.product_id',
+    );
 
     // Combine orders with their items
     const ordersWithItems = orders.map((order: any) => {
