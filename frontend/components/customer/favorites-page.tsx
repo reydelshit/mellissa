@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Heart, MapPin, Star, Clock } from 'lucide-react';
+import CustomerSidebar from '@/components/customer/customer-sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,14 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { dummyStores } from '@/lib/dummy-data';
-import CustomerSidebar from '@/components/customer/customer-sidebar';
-import axios from 'axios';
-import { StoreDetailsType } from '../admin/admin-dashboard';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
+import { Clock, Heart, MapPin } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { StoreDetailsType } from '../admin/admin-dashboard';
 
 export interface StoreFavorites extends StoreDetailsType {
   created_at: string;
@@ -101,7 +99,6 @@ export function FavoriteStoreCard({
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<StoreFavorites[]>([]);
-
   const [user_id, setUser_id] = useState('');
 
   const fetchFavorites = async () => {

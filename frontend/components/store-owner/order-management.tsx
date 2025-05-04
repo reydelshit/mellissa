@@ -75,6 +75,7 @@ export default function OrderManagement() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = order.fullname
       .toLowerCase()
