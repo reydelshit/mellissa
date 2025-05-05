@@ -539,7 +539,9 @@ export default function AdminDashboard() {
                   <Button
                     onClick={() => {
                       // setSelectedSpace(availableSpaces[0]);
-                      setShowAddOwnerDialog(true);
+                      // setShowAddOwnerDialog(true);
+
+                      setActiveTab('map');
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
