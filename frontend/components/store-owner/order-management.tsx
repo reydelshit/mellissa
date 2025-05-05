@@ -37,6 +37,7 @@ import { usePathname } from 'next/navigation';
 import path from 'path';
 import CustomerSidebar from '../customer/customer-sidebar';
 import { formatDate } from '@/lib/formatDate';
+import { ExportToPDF } from '../ExportPdf';
 
 export type OrderTypes = {
   order_id: string;
@@ -210,10 +211,7 @@ export default function OrderManagement() {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline" onClick={handleExportData}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+              <ExportToPDF data={filteredOrders} fileName="orders" />
             </div>
           </div>
 

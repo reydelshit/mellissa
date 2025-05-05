@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dummyOrders, dummyReviews } from '@/lib/dummy-data';
+import axios from 'axios';
 import { Calendar, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -34,6 +35,8 @@ import {
   YAxis,
   LineChart,
 } from 'recharts';
+import { OrderTypes } from './order-management';
+import { StoreDetailsType } from '../admin/admin-dashboard';
 
 const BarGraph = ({ data, dataKey, color, label }: any) => (
   <div className="h-64">
@@ -63,8 +66,37 @@ export default function AnalyticsPage() {
   const [customerData, setCustomerData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orders, setOrders] = useState<OrderTypes[]>([]);
+  const [storeOwnersFromDB, setStoreOwners] = useState<StoreDetailsType[]>([]);
+
+  const store_owner_id = localStorage.getItem('store_owner_id');
+
+  const fetchStoreOwners = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/store-owner');
+      console.log(response.data);
+      setStoreOwners(response.data);
+    } catch (error) {
+      console.error('Error fetching store owners:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get('http://localhost:8800/api/orders');
+      const filteredOrders = response.data.filter(
+        (order: any) => String(order.store_id) === store_owner_id,
+      );
+      setOrders(filteredOrders);
+      console.log('Fetched orders:', response.data);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+    }
+  };
 
   useEffect(() => {
+    fetchOrders();
+    fetchStoreOwners();
     const fetchData = async () => {
       try {
         setIsLoading(true);
@@ -121,19 +153,25 @@ export default function AnalyticsPage() {
                   <SelectValue placeholder="Select time range" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="day">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem disabled value="day">
+                    Today
+                  </SelectItem>
+                  <SelectItem disabled value="week">
+                    This Week
+                  </SelectItem>
                   <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem disabled value="year">
+                    This Year
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
-              <Button variant="outline">
+              <Button disabled variant="outline">
                 <Calendar className="h-4 w-4 mr-2" />
                 Custom Range
               </Button>
 
-              <Button>
+              <Button disabled>
                 <Download className="h-4 w-4 mr-2" />
                 Export Data
               </Button>
@@ -149,11 +187,12 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ₱{totalRevenue.toFixed(2)}
+                  ₱
+                  {orders.reduce(
+                    (sum, order) => sum + parseFloat(order.total_price),
+                    0,
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +12% from last {timeRange}
-                </p>
               </CardContent>
             </Card>
 
@@ -164,10 +203,7 @@ export default function AnalyticsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{dummyOrders.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +8% from last {timeRange}
-                </p>
+                <div className="text-2xl font-bold">{orders.length}</div>
               </CardContent>
             </Card>
 
@@ -179,11 +215,16 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ₱{(totalRevenue / dummyOrders.length).toFixed(2)}
+                  ₱
+                  {orders.length > 0
+                    ? (
+                        orders.reduce(
+                          (sum, order) => sum + parseFloat(order.total_price),
+                          0,
+                        ) / orders.length
+                      ).toFixed(2)
+                    : 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +4% from last {timeRange}
-                </p>
               </CardContent>
             </Card>
 
@@ -195,11 +236,14 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {averageRating.toFixed(1)}/5
+                  {
+                    storeOwnersFromDB.find(
+                      (store) =>
+                        String(store.storeOwner_id) === String(store_owner_id),
+                    )?.avg_rating
+                  }
+                  /5
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  -0.2 from last {timeRange}
-                </p>
               </CardContent>
             </Card>
           </div>
