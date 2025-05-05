@@ -15,7 +15,11 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  DollarSign,
   Percent,
+  ShoppingBag,
+  ShoppingCart,
+  Star,
   Store,
   Tag,
 } from 'lucide-react';
@@ -235,8 +239,7 @@ export default function StoreOwnerDashboard() {
                     )}
                   </div>
                   <div className="flex items-center text-green-500 text-sm">
-                    <ArrowUp className="h-4 w-4 mr-1" />
-                    12%
+                    <DollarSign className="h-4 w-4 mr-1" />
                   </div>
                 </div>
               </CardContent>
@@ -252,8 +255,7 @@ export default function StoreOwnerDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="text-2xl font-bold">{orders.length}</div>
                   <div className="flex items-center text-green-500 text-sm">
-                    <ArrowUp className="h-4 w-4 mr-1" />
-                    8%
+                    <ShoppingCart className="h-4 w-4 mr-1" />
                   </div>
                 </div>
               </CardContent>
@@ -269,8 +271,7 @@ export default function StoreOwnerDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="text-2xl font-bold">{products.length}</div>
                   <div className="flex items-center text-green-500 text-sm">
-                    <ArrowUp className="h-4 w-4 mr-1" />
-                    4%
+                    <ShoppingBag className="h-4 w-4 mr-1" />
                   </div>
                 </div>
               </CardContent>
@@ -294,9 +295,8 @@ export default function StoreOwnerDashboard() {
                     }
                     /5
                   </div>
-                  <div className="flex items-center text-red-500 text-sm">
-                    <ArrowDown className="h-4 w-4 mr-1" />
-                    0.2
+                  <div className="flex items-center text-green-500 text-sm">
+                    <Star className="h-4 w-4 mr-1" />
                   </div>
                 </div>
               </CardContent>

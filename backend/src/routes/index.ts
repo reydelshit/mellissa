@@ -9,6 +9,7 @@ import { ordersRouter } from '../api/order';
 import { orderItemsRouter } from '../api/orderItems';
 import { favoritesRouter } from '../api/favorites';
 import { ratingRouter } from '../api/review';
+import { graphsRouter } from '../api/graphs';
 
 const router = Router();
 
@@ -23,5 +24,7 @@ router.use('/orders', ordersRouter);
 router.use('/order-items', orderItemsRouter);
 router.use('/favorites', favoritesRouter);
 router.use('/review', ratingRouter);
+
+router.use('/graphs', graphsRouter);
 
 export default router;

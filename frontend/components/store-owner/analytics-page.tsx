@@ -1,13 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  BarChart3,
-  LineChart,
-  PieChart,
-  Download,
-  Calendar,
-} from 'lucide-react';
+import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -15,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -25,7 +18,37 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dummyOrders, dummyReviews } from '@/lib/dummy-data';
-import StoreOwnerSidebar from '@/components/store-owner/store-owner-sidebar';
+import { Calendar, Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart as RechartsLineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  LineChart,
+} from 'recharts';
+
+const BarGraph = ({ data, dataKey, color, label }: any) => (
+  <div className="h-64">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="month" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey={dataKey} fill={color} name={label} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('week');
@@ -34,6 +57,50 @@ export default function AnalyticsPage() {
   const averageRating =
     dummyReviews.reduce((sum, review) => sum + review.rating, 0) /
     dummyReviews.length;
+
+  const [orderData, setOrderData] = useState([]);
+  const [reviewData, setReviewData] = useState([]);
+  const [customerData, setCustomerData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+
+        const [ordersRes, reviewsRes, customersRes] = await Promise.all([
+          fetch('http://localhost:8800/api/graphs/monthly-stats/orders'),
+          fetch('http://localhost:8800/api/graphs/monthly-stats/ratings'),
+          fetch('http://localhost:8800/api/graphs/monthly-stats/customers'),
+        ]);
+
+        if (!ordersRes.ok || !reviewsRes.ok || !customersRes.ok) {
+          throw new Error('Failed to fetch data.');
+        }
+
+        const [orders, reviews, customers] = await Promise.all([
+          ordersRes.json(),
+          reviewsRes.json(),
+          customersRes.json(),
+        ]);
+
+        console.log('Orders:', orders);
+        console.log('Reviews:', reviews);
+        console.log('Customers:', customers);
+
+        setOrderData(orders);
+        setReviewData(reviews);
+        setCustomerData(customers);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="flex h-screen">
@@ -145,88 +212,39 @@ export default function AnalyticsPage() {
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="sales" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sales Overview</CardTitle>
-                  <CardDescription>
-                    Sales data for the selected time period
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
-                    <div className="text-center">
-                      <LineChart className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">
-                        Sales chart visualization would appear here
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             <TabsContent value="orders" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Analytics</CardTitle>
-                  <CardDescription>
-                    Order data for the selected time period
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
-                    <div className="text-center">
-                      <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">
-                        Order analytics visualization would appear here
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <BarGraph
+                data={orderData}
+                dataKey="orderCount"
+                color="#3b82f6"
+                label="Orders"
+              />
+            </TabsContent>
+            <TabsContent value="sales" className="pt-4">
+              <BarGraph
+                data={orderData}
+                dataKey="totalRevenue"
+                color="#10b981"
+                label="Sales (₱)"
+              />
             </TabsContent>
 
             <TabsContent value="customers" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Insights</CardTitle>
-                  <CardDescription>
-                    Customer data for the selected time period
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
-                    <div className="text-center">
-                      <PieChart className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">
-                        Customer insights visualization would appear here
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <BarGraph
+                data={customerData}
+                dataKey="customerCount"
+                color="#8b5cf6"
+                label="Customers"
+              />
             </TabsContent>
 
             <TabsContent value="reviews" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Review Analysis</CardTitle>
-                  <CardDescription>
-                    Review data for the selected time period
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] flex items-center justify-center bg-muted/40 rounded-md">
-                    <div className="text-center">
-                      <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground" />
-                      <p className="text-muted-foreground mt-2">
-                        Review analysis visualization would appear here
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <BarGraph
+                data={reviewData}
+                dataKey="reviewCount"
+                color="#ef4444"
+                label="Reviews"
+              />
             </TabsContent>
           </Tabs>
         </div>

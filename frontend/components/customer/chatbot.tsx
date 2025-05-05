@@ -25,17 +25,17 @@ const botResponses = [
   'You can return items within 30 days with a receipt.',
   'Shipping usually takes 3–5 business days.',
   'Yes! We have a sale going on right now — check our homepage!',
-  'You can call us at (123) 456-7890.',
+  'You can call us at (63) 12321312321312.',
   'Yes, we offer gift wrapping at checkout!',
   'We have a loyalty program! Ask us how to join.',
   'Sorry to hear that. Let’s solve your issue together.',
-  'Our store is located at 123 Main Street.',
+  'Our store is located at any where.',
   'I’m not sure about that, but I’m happy to help!',
 ];
 
 export const getResponse = async (userMessage: string): Promise<string> => {
   const apiToken = process.env.NEXT_PUBLIC_HF_API_TOKEN;
-  const apiUrl = process.env.NEXT_PUBLIC_HF_URL; // Correct model URL
+  const apiUrl = process.env.NEXT_PUBLIC_HF_URL;
 
   const apiRequestJson = {
     inputs: `<s>[INST] You are a helpful store assistant. Keep answers short and friendly. ${userMessage} [/INST]`,
