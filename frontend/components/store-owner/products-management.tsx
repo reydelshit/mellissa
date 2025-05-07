@@ -385,15 +385,12 @@ export default function ProductsManagement() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
+                    <Label htmlFor="price">Price (₱)</Label>
                     <Input
                       id="price"
                       type="number"
-                      step="0.01"
                       value={price}
-                      onChange={(e) =>
-                        setPrice(parseFloat(e.target.value) || 0)
-                      }
+                      onChange={(e) => setPrice(parseFloat(e.target.value))}
                       placeholder="9.99"
                     />
                   </div>

@@ -73,7 +73,7 @@ export default function OrderManagement() {
         const store_owner_id = localStorage.getItem('store_owner_id');
 
         const filteredOrders = response.data.filter(
-          (order: any) => String(order.store_id) === store_owner_id,
+          (order: any) => String(order.store_id) === String(store_owner_id),
         );
 
         setOrders(filteredOrders);
@@ -81,7 +81,7 @@ export default function OrderManagement() {
         const user_id = localStorage.getItem('user_id');
 
         const filteredOrders = response.data.filter(
-          (order: any) => String(order.user_id) === user_id,
+          (order: any) => String(order.user_id) === String(user_id),
         );
 
         setOrders(filteredOrders);

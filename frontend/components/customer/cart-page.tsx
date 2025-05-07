@@ -341,11 +341,15 @@ export default function CartPage() {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="card" id="card" />
-                        <Label htmlFor="card">Credit Card</Label>
+                        <Label htmlFor="card">Gcash</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="paypal" id="paypal" />
-                        <Label htmlFor="paypal">PayPal</Label>
+                        <Label htmlFor="paypal">Paymaya</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="cash" id="cash" />
+                        <Label htmlFor="cash">Cash</Label>
                       </div>
                     </RadioGroup>
                   </div>
@@ -357,12 +361,12 @@ export default function CartPage() {
                       <span>Subtotal</span>
                       <span>₱{cartTotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    {/* <div className="flex justify-between">
                       <span>Delivery Fee</span>
                       <span>₱2.99</span>
-                    </div>
+                    </div> */}
                     <div className="flex justify-between">
-                      <span>Tax</span>
+                      <span>Discount</span>
                       <span>₱{(cartTotal * 0.08).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold">
