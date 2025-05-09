@@ -371,9 +371,7 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
-                      <span>
-                        ₱{(cartTotal + 2.99 + cartTotal * 0.08).toFixed(2)}
-                      </span>
+                      <span>₱{(cartTotal + cartTotal * 0.08).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

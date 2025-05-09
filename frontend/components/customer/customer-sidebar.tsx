@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   ShoppingBag,
+  Group,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,13 @@ export default function CustomerSidebar() {
           </NavItem>
           <NavItem href="/customer/cart" icon={ShoppingCart}>
             Cart
+          </NavItem>
+
+          <NavItem
+            href="http://localhost:5173/event/eee9b2f3-6bab-43ec-aa74-c4f1e35e1680"
+            icon={Group}
+          >
+            Forum
           </NavItem>
         </nav>
       </div>
